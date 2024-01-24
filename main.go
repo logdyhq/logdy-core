@@ -1,0 +1,103 @@
+package main
+
+import (
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+)
+
+var ch chan Message
+
+var rootCmd = &cobra.Command{
+	Use:   "logdy [command]",
+	Short: "Logdy",
+	Args:  cobra.MinimumNArgs(1),
+	//https://patorjk.com/software/taag/#p=display&f=Colossal&t=Logdy%20v0.1
+	Long: `	
+
+
+888                            888                         .d8888b.       d888   
+888                            888                        d88P  Y88b     d8888   
+888                            888                        888    888       888   
+888      .d88b.   .d88b.   .d88888 888  888      888  888 888    888       888   
+888     d88""88b d88P"88b d88" 888 888  888      888  888 888    888       888   
+888     888  888 888  888 888  888 888  888      Y88  88P 888    888       888   
+888     Y88..88P Y88b 888 Y88b 888 Y88b 888       Y8bd8P  Y88b  d88P d8b   888   
+88888888 "Y88P"   "Y88888  "Y88888  "Y88888        Y88P    "Y8888P"  Y8P 8888888 
+                      888               888                                      
+                 Y8b d88P          Y8b d88P                                      
+                  "Y88P"            "Y88P"                                       
+
+	
+Visit https://logdy.dev for more info!
+Logdy is a hackable web UI for all kinds of logs produced locally. 
+Break free from the terminal and stream your logs in any format to a web UI 
+where you can filter and browse well formatted application output.
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
+	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		httpPort, _ := cmd.Flags().GetString("port")
+		noanalytics, _ := cmd.Flags().GetBool("noanalytics")
+		verbose, _ := cmd.Flags().GetBool("verbose")
+
+		if !noanalytics {
+			logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --noanalytics.")
+		}
+
+		if verbose {
+			logger.SetLevel(logrus.TraceLevel)
+		} else {
+			logger.SetLevel(logrus.InfoLevel)
+		}
+
+		handleHttp(ch, httpPort)
+	},
+}
+
+var listenStdCmd = &cobra.Command{
+	Use:   "listen_stdin [command]",
+	Short: "Listens to STDOUT/STDERR of a provided command. Example ./logdy listen_stdin \"npm run dev\"",
+	Long:  ``,
+	Args:  cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		logger.WithFields(logrus.Fields{
+			"cmd": args[0],
+		}).Info("Command")
+		arg := strings.Split(args[0], " ")
+		startCmd(ch, arg[0], arg[1:])
+	},
+}
+
+var listenSocketCmd = &cobra.Command{
+	Use:   "listen_socket [port]",
+	Short: "Sets up a port to listen on for incoming log messages. Example ./logdy listen_socket 8233",
+	Long:  ``,
+	Args:  cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		go startSocketServer(ch, args[0])
+	},
+}
+
+func init() {
+	ch = make(chan Message, 1000)
+	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose logs")
+	rootCmd.PersistentFlags().BoolP("noanalytics", "n", false, "Opt-out from sending anonymous analytical data that help improve this product")
+
+	initLogger()
+
+	rootCmd.AddCommand(listenStdCmd)
+	rootCmd.AddCommand(listenSocketCmd)
+
+}
+
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
