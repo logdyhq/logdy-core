@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -59,7 +60,7 @@ where you can filter and browse well formatted application output.
 }
 
 var listenStdCmd = &cobra.Command{
-	Use:   "listen_stdin [command]",
+	Use:   "stdin [command]",
 	Short: "Listens to STDOUT/STDERR of a provided command. Example ./logdy listen_stdin \"npm run dev\"",
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
@@ -73,7 +74,7 @@ var listenStdCmd = &cobra.Command{
 }
 
 var listenSocketCmd = &cobra.Command{
-	Use:   "listen_socket [port]",
+	Use:   "socket [port]",
 	Short: "Sets up a port to listen on for incoming log messages. Example ./logdy listen_socket 8233",
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
@@ -82,16 +83,35 @@ var listenSocketCmd = &cobra.Command{
 	},
 }
 
+var demoSocketCmd = &cobra.Command{
+	Use:   "demo [number]",
+	Short: "Starts a demo mode, random logs will be produced, the [number] defines a number of messages produced per second",
+	Long:  ``,
+	Args:  cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		produceJson := !cmd.Flag("sample-text").Changed
+		num, err := strconv.Atoi(args[0])
+
+		if err != nil {
+			panic(err)
+		}
+
+		go generateRandomData(produceJson, num, ch)
+	},
+}
+
 func init() {
 	ch = make(chan Message, 1000)
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose logs")
-	rootCmd.PersistentFlags().BoolP("noanalytics", "n", false, "Opt-out from sending anonymous analytical data that help improve this product")
+	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that help improve this product")
+	demoSocketCmd.PersistentFlags().BoolP("sample-text", "", true, "By default demo data will produce JSON, use this flag to produce raw text")
 
 	initLogger()
 
 	rootCmd.AddCommand(listenStdCmd)
 	rootCmd.AddCommand(listenSocketCmd)
+	rootCmd.AddCommand(demoSocketCmd)
 
 }
 

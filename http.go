@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -21,6 +22,7 @@ type Message struct {
 	Content     string          `json:"content"`
 	JsonContent json.RawMessage `json:"json_content"`
 	IsJson      bool            `json:"is_json"`
+	Ts          time.Time       `json:"ts"`
 }
 
 type Clients struct {
