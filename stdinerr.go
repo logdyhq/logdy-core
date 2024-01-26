@@ -2,27 +2,14 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"io"
 	"os/exec"
-
-	"github.com/sirupsen/logrus"
-	"github.com/valyala/fastjson"
 )
 
-func readOutput(reader io.Reader, outputCh chan<- Message, messageType MessageType) {
+func readOutput(reader io.Reader, outputCh chan Message, messageType MessageType) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
-		logger.WithFields(logrus.Fields{
-			"msg": scanner.Text(),
-		}).Debug("Got messages from process STDOUT/STDERR")
-		validJson := fastjson.Validate(scanner.Text())
-		var cs json.RawMessage
-		if validJson == nil {
-			cs = json.RawMessage(scanner.Bytes())
-		}
-
-		outputCh <- Message{Mtype: messageType, Content: scanner.Text(), JsonContent: cs, IsJson: validJson == nil}
+		produce(outputCh, scanner.Text(), messageType)
 	}
 }
 

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -26,17 +25,24 @@ type Message struct {
 }
 
 type Clients struct {
-	mu       sync.Mutex
-	mainChan <-chan Message
-	clients  map[int]chan Message
+	mu                 sync.Mutex
+	mainChan           <-chan Message
+	clients            map[int]chan Message
+	buffer             []Message
+	currentlyConnected int
 }
 
 func (c *Clients) Start() {
 	for {
 		msg := <-c.mainChan
 		c.mu.Lock()
+		if c.currentlyConnected == 0 {
+			logger.Debug("Received a log message but no client is connected, buffering message")
+			c.buffer = append(c.buffer, msg)
+		}
+
 		for _, ch := range c.clients {
-			// log.Println("Sending to", cid)
+
 			ch <- msg
 		}
 		c.mu.Unlock()
@@ -44,14 +50,30 @@ func (c *Clients) Start() {
 }
 
 func (c *Clients) Join(id int) <-chan Message {
+	c.mu.Lock()
+	defer func() {
+		logger.WithFields(logrus.Fields{
+			"msg_count": len(c.buffer),
+		}).Info("Flushing log messages buffer to a recently connected client")
+		for _, msg := range c.buffer {
+			c.clients[id] <- msg
+		}
+
+		c.buffer = []Message{}
+	}()
+	defer c.mu.Unlock()
+
 	c.clients[id] = make(chan Message, 100)
+	c.currentlyConnected++
 	return c.clients[id]
 }
 
 func (c *Clients) Close(id int) {
 	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	delete(c.clients, id)
-	c.mu.Unlock()
+	c.currentlyConnected--
 }
 
 func handleHttp(msgs <-chan Message, httpPort string) {
@@ -65,9 +87,11 @@ func handleHttp(msgs <-chan Message, httpPort string) {
 	}
 
 	clients := Clients{
-		mu:       sync.Mutex{},
-		mainChan: msgs,
-		clients:  map[int]chan Message{},
+		mu:                 sync.Mutex{},
+		mainChan:           msgs,
+		clients:            map[int]chan Message{},
+		currentlyConnected: 0,
+		buffer:             []Message{},
 	}
 
 	go clients.Start()
@@ -89,9 +113,9 @@ func handleHttp(msgs <-chan Message, httpPort string) {
 			return
 		}
 
-		logger.Info("New client connected")
+		logger.Info("New Web UI client connected")
 
-		cid = cid + 1
+		cid++
 		clientId := cid
 		ch := clients.Join(cid)
 
@@ -112,9 +136,9 @@ func handleHttp(msgs <-chan Message, httpPort string) {
 			err = conn.WriteMessage(1, bts)
 
 			if err != nil {
-				log.Println("Err", err)
+				logger.Error("Err", err)
 				clients.Close(clientId)
-				log.Println("Closed client")
+				logger.Info("Closed client", clientId)
 				break
 			}
 		}

@@ -2,12 +2,10 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"net"
 	"os"
 
 	"github.com/sirupsen/logrus"
-	"github.com/valyala/fastjson"
 )
 
 func handleConnection(conn net.Conn, ch chan Message) {
@@ -18,17 +16,7 @@ func handleConnection(conn net.Conn, ch chan Message) {
 
 	// Read lines from the connection and write them to the channel
 	for scanner.Scan() {
-		line := scanner.Text()
-		logger.WithFields(logrus.Fields{
-			"msg": line,
-		}).Debug("Message received")
-
-		validJson := fastjson.Validate(line)
-		var cs json.RawMessage
-		if validJson == nil {
-			cs = json.RawMessage(line)
-		}
-		ch <- Message{Mtype: MessageTypeStdout, Content: line, JsonContent: cs, IsJson: validJson == nil}
+		produce(ch, scanner.Text(), MessageTypeStdout)
 	}
 }
 

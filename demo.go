@@ -20,15 +20,12 @@ func generateRandomData(jsonFormat bool, numPerSec int, ch chan Message) {
 
 	for {
 		var msg string
-		var jc json.RawMessage
 		if jsonFormat {
 			msg = generateJsonRandomData()
-			jc = json.RawMessage(msg)
 		} else {
 			msg = generateTextRandomData()
 		}
-
-		ch <- Message{Mtype: MessageTypeStdout, Content: msg, IsJson: jsonFormat, JsonContent: jc, Ts: time.Now()}
+		produce(ch, msg, MessageTypeStdout)
 		time.Sleep(time.Duration((1 / float64(numPerSec)) * float64(time.Second)))
 	}
 
