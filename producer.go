@@ -15,8 +15,16 @@ func produce(ch chan Message, line string, mt LogType) {
 	}
 
 	logger.WithFields(logrus.Fields{
-		"line": line[0:45] + "...",
+		"line": trunc(line, 45),
 	}).Debug("Producing message")
 
 	ch <- Message{Mtype: mt, Content: line, JsonContent: cs, IsJson: validJson == nil, BaseMessage: BaseMessage{MessageType: "log"}}
+}
+
+func trunc(str string, limit int) string {
+	if len(str) <= limit {
+		return str
+	}
+
+	return str[:limit] + "..."
 }

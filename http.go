@@ -142,7 +142,7 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool) {
 			bts, err := json.Marshal(msg)
 
 			logger.WithFields(logrus.Fields{
-				"msg":      string(bts)[0:45] + "...",
+				"msg":      trunc(string(bts), 45),
 				"clientId": clientId,
 			}).Debug("Sending message through WebSocket")
 
