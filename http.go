@@ -11,13 +11,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type MessageType int
+type LogType int
 
-const MessageTypeStdout MessageType = 1
-const MessageTypeStderr MessageType = 2
+const MessageTypeStdout LogType = 1
+const MessageTypeStderr LogType = 2
 
 type Message struct {
-	Mtype       MessageType     `json:"message_type"`
+	BaseMessage
+	Mtype       LogType         `json:"log_type"`
 	Content     string          `json:"content"`
 	JsonContent json.RawMessage `json:"json_content"`
 	IsJson      bool            `json:"is_json"`
@@ -30,6 +31,15 @@ type Clients struct {
 	clients            map[int]chan Message
 	buffer             []Message
 	currentlyConnected int
+}
+
+type BaseMessage struct {
+	MessageType string `json:"message_type"`
+}
+
+type InitMessage struct {
+	BaseMessage
+	AnalyticsEnabled bool
 }
 
 func (c *Clients) Start() {
@@ -76,7 +86,7 @@ func (c *Clients) Close(id int) {
 	c.currentlyConnected--
 }
 
-func handleHttp(msgs <-chan Message, httpPort string) {
+func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool) {
 	// Create a new WebSocket server.
 	wsUpgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -119,12 +129,21 @@ func handleHttp(msgs <-chan Message, httpPort string) {
 		clientId := cid
 		ch := clients.Join(cid)
 
+		initMsg, _ := json.Marshal(InitMessage{
+			BaseMessage: BaseMessage{
+				MessageType: "init",
+			},
+			AnalyticsEnabled: analyticsEnabled,
+		})
+		conn.WriteMessage(1, initMsg)
+
 		for {
 			msg := <-ch
 			bts, err := json.Marshal(msg)
 
 			logger.WithFields(logrus.Fields{
-				"msg": string(bts),
+				"msg":      string(bts)[0:45] + "...",
+				"clientId": clientId,
 			}).Debug("Sending message through WebSocket")
 
 			if err != nil {

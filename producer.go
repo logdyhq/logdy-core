@@ -7,7 +7,7 @@ import (
 	"github.com/valyala/fastjson"
 )
 
-func produce(ch chan Message, line string, mt MessageType) {
+func produce(ch chan Message, line string, mt LogType) {
 	validJson := fastjson.Validate(line)
 	var cs json.RawMessage
 	if validJson == nil {
@@ -15,8 +15,8 @@ func produce(ch chan Message, line string, mt MessageType) {
 	}
 
 	logger.WithFields(logrus.Fields{
-		"line": line,
+		"line": line[0:45] + "...",
 	}).Debug("Producing message")
 
-	ch <- Message{Mtype: mt, Content: line, JsonContent: cs, IsJson: validJson == nil}
+	ch <- Message{Mtype: mt, Content: line, JsonContent: cs, IsJson: validJson == nil, BaseMessage: BaseMessage{MessageType: "log"}}
 }

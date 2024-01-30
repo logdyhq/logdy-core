@@ -42,11 +42,11 @@ where you can filter and browse well formatted application output.
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		httpPort, _ := cmd.Flags().GetString("port")
-		noanalytics, _ := cmd.Flags().GetBool("noanalytics")
+		noanalytics, _ := cmd.Flags().GetBool("no-analytics")
 		verbose, _ := cmd.Flags().GetBool("verbose")
 
 		if !noanalytics {
-			logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --noanalytics.")
+			logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
 		}
 
 		if verbose {
@@ -55,7 +55,7 @@ where you can filter and browse well formatted application output.
 			logger.SetLevel(logrus.InfoLevel)
 		}
 
-		handleHttp(ch, httpPort)
+		handleHttp(ch, httpPort, !noanalytics)
 	},
 }
 
