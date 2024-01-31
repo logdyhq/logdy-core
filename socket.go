@@ -20,10 +20,11 @@ func handleConnection(conn net.Conn, ch chan Message) {
 	}
 }
 
-func startSocketServer(ch chan Message, port string) {
+func startSocketServer(ch chan Message, ip string, port string) {
 
+	addr := ip + ":" + port
 	// Start the TCP server
-	server, err := net.Listen("tcp", ":"+port)
+	server, err := net.Listen("tcp", addr)
 	if err != nil {
 		logger.Error("Error starting server:", err)
 		os.Exit(1)
@@ -31,7 +32,7 @@ func startSocketServer(ch chan Message, port string) {
 	defer server.Close()
 
 	logger.WithFields(logrus.Fields{
-		"port": port,
+		"address": addr,
 	}).Info("TCP Server is listening")
 
 	// Accept incoming connections and handle them in a separate goroutine

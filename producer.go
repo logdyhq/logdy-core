@@ -22,6 +22,7 @@ func produce(ch chan Message, line string, mt LogType) {
 }
 
 func trunc(str string, limit int) string {
+
 	if len(str) <= limit {
 		return str
 	}

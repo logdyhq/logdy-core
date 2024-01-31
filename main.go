@@ -61,13 +61,14 @@ where you can filter and browse well formatted application output.
 
 var listenStdCmd = &cobra.Command{
 	Use:   "stdin [command]",
-	Short: "Listens to STDOUT/STDERR of a provided command. Example ./logdy listen_stdin \"npm run dev\"",
+	Short: "Listens to STDOUT/STDERR of a provided command. Example ./logdy stdin \"npm run dev\"",
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.WithFields(logrus.Fields{
 			"cmd": args[0],
 		}).Info("Command")
+
 		arg := strings.Split(args[0], " ")
 		startCmd(ch, arg[0], arg[1:])
 	},
@@ -75,11 +76,13 @@ var listenStdCmd = &cobra.Command{
 
 var listenSocketCmd = &cobra.Command{
 	Use:   "socket [port]",
-	Short: "Sets up a port to listen on for incoming log messages. Example ./logdy listen_socket 8233",
+	Short: "Sets up a port to listen on for incoming log messages. Example ./logdy socket 8233",
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		go startSocketServer(ch, args[0])
+		ip, _ := cmd.Flags().GetString("ip")
+
+		go startSocketServer(ch, ip, args[0])
 	},
 }
 
@@ -106,6 +109,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose logs")
 	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that help improve this product")
 	demoSocketCmd.PersistentFlags().BoolP("sample-text", "", true, "By default demo data will produce JSON, use this flag to produce raw text")
+	listenSocketCmd.PersistentFlags().StringP("ip", "", "", "IP address to listen to, leave empty to listen on all IP addresses")
 
 	initLogger()
 
