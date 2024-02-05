@@ -1,5 +1,9 @@
 # Logdy - terminal logs in web browser
 
+<p align="center">
+<img src="https://github.com/logdyhq/logdy-core/assets/1653294/9ec8cb3f-0b8f-4523-b600-377444734b9d" height=300/>
+</p>
+
 Supercharge terminal logs with web browser UI and low-code (TypeScript snippets). Save 90% of time searching and browsing logs. It's like **jq, tail, less, grep and awk merged together** and available in a clean UI. **Self-hosted, single binary.**
 
 ![autogenerate](https://github.com/logdyhq/logdy-core/assets/1653294/bfe09fa8-bbba-46fa-b54d-503f796c7b57)
