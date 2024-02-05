@@ -2,7 +2,7 @@
 
 Supercharge terminal logs with web browser UI and low-code (TypeScript snippets). Save 90% of time searching and browsing logs. It's like **jq, tail, less, grep and awk merged together** and available in a clean UI. **Self-hosted, single binary.**
 
-![Logdy](https://logdy.dev/autogenerate.gif)
+![autogenerate](https://github.com/logdyhq/logdy-core/assets/1653294/bfe09fa8-bbba-46fa-b54d-503f796c7b57)
 
 Visit [logdy.dev](http://logdy.dev) for more info.
 
