@@ -12,28 +12,14 @@ import (
 
 var ch chan Message
 
+var Version = "0.0.0"
+
 var rootCmd = &cobra.Command{
-	Use:   "logdy [command]",
-	Short: "Logdy",
-	Args:  cobra.MinimumNArgs(1),
-	//https://patorjk.com/software/taag/#p=display&f=Colossal&t=Logdy%20v0.1
-	Long: `	
-
-
-888                            888                         .d8888b.       d888   
-888                            888                        d88P  Y88b     d8888   
-888                            888                        888    888       888   
-888      .d88b.   .d88b.   .d88888 888  888      888  888 888    888       888   
-888     d88""88b d88P"88b d88" 888 888  888      888  888 888    888       888   
-888     888  888 888  888 888  888 888  888      Y88  88P 888    888       888   
-888     Y88..88P Y88b 888 Y88b 888 Y88b 888       Y8bd8P  Y88b  d88P d8b   888   
-88888888 "Y88P"   "Y88888  "Y88888  "Y88888        Y88P    "Y8888P"  Y8P 8888888 
-                      888               888                                      
-                 Y8b d88P          Y8b d88P                                      
-                  "Y88P"            "Y88P"                                       
-
-	
-Visit https://logdy.dev for more info!
+	Use:     "logdy [command]",
+	Short:   "Logdy",
+	Version: Version,
+	Args:    cobra.MinimumNArgs(1),
+	Long: `Visit https://logdy.dev for more info!
 Logdy is a hackable web UI for all kinds of logs produced locally. 
 Break free from the terminal and stream your logs in any format to a web UI 
 where you can filter and browse well formatted application output.
