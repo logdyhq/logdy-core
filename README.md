@@ -33,7 +33,7 @@ Open the URL Address and start building parsers, columns and filters.
 
 ## Documentation
 
-For product documentation navigate to the [official docs](https://logdy.dev/docs).
+For product documentation navigate to the [official docs](https://logdy.dev/docs/quick-start).
 
 ## Usage
 
