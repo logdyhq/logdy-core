@@ -70,7 +70,11 @@ You can read more about [demo mode](https://logdy.dev/docs/demo-mode).
 
 ## Building
 
-For a local architecture build
+This repository uses static asset embedding during compilation. This way, the UI is served from a single binary. Before you build make sure you copy a compiled [UI](https://github.com/logdyhq/logdy-ui) (follow the instructions about building) in `assets` directory.
+
+Look at `embed.go` for more details on how UI is embedded into the binary.
+
+For a local architecture build:
 ```bash
 go build
 ```
