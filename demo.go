@@ -25,7 +25,7 @@ func generateRandomData(jsonFormat bool, numPerSec int, ch chan Message) {
 		} else {
 			msg = generateTextRandomData()
 		}
-		produce(ch, msg, MessageTypeStdout)
+		produce(ch, msg, MessageTypeStdout, nil)
 		time.Sleep(time.Duration((1 / float64(numPerSec)) * float64(time.Second)))
 	}
 

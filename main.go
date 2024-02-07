@@ -59,16 +59,29 @@ var listenStdCmd = &cobra.Command{
 		startCmd(ch, arg[0], arg[1:])
 	},
 }
-
-var listenSocketCmd = &cobra.Command{
-	Use:   "socket [port]",
-	Short: "Sets up a port to listen on for incoming log messages. Example ./logdy socket 8233",
+var forwardCmd = &cobra.Command{
+	Use:   "forward [port]",
+	Short: "Forwards the STDIN to a specified port, example \"tail -f file.log | logdy forward 8123\"",
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ip, _ := cmd.Flags().GetString("ip")
 
-		go startSocketServer(ch, ip, args[0])
+		consumeStdinAndForwardToPort(ip, args[0])
+	},
+}
+
+var listenSocketCmd = &cobra.Command{
+	Use:   "socket [port(s)]",
+	Short: "Sets up a port to listen on for incoming log messages. Example ./logdy socket 8233. You can setup multiple ports ./logdy socket 8123,8124,8125",
+	Long:  ``,
+	Args:  cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		ip, _ := cmd.Flags().GetString("ip")
+
+		ports := strings.Split(args[0], ",")
+
+		go startSocketServers(ch, ip, ports)
 	},
 }
 
@@ -101,6 +114,7 @@ func init() {
 
 	rootCmd.AddCommand(listenStdCmd)
 	rootCmd.AddCommand(listenSocketCmd)
+	rootCmd.AddCommand(forwardCmd)
 	rootCmd.AddCommand(demoSocketCmd)
 
 }

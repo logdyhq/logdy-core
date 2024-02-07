@@ -16,6 +16,11 @@ type LogType int
 const MessageTypeStdout LogType = 1
 const MessageTypeStderr LogType = 2
 
+type MessageOrigin struct {
+	Port string `json:"port"`
+	File string `josn:"file"`
+}
+
 type Message struct {
 	BaseMessage
 	Mtype       LogType         `json:"log_type"`
@@ -23,6 +28,7 @@ type Message struct {
 	JsonContent json.RawMessage `json:"json_content"`
 	IsJson      bool            `json:"is_json"`
 	Ts          time.Time       `json:"ts"`
+	Origin      *MessageOrigin  `json:"origin"`
 }
 
 type Clients struct {

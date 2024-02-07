@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func handleConnection(conn net.Conn, ch chan Message) {
+func handleConnection(conn net.Conn, ch chan Message, port string) {
 	defer conn.Close()
 
 	// Create a new bufio.Scanner to read lines from the connection
@@ -16,7 +16,13 @@ func handleConnection(conn net.Conn, ch chan Message) {
 
 	// Read lines from the connection and write them to the channel
 	for scanner.Scan() {
-		produce(ch, scanner.Text(), MessageTypeStdout)
+		produce(ch, scanner.Text(), MessageTypeStdout, &MessageOrigin{Port: port, File: ""})
+	}
+}
+
+func startSocketServers(ch chan Message, ip string, ports []string) {
+	for _, port := range ports {
+		go startSocketServer(ch, ip, port)
 	}
 }
 
@@ -44,7 +50,6 @@ func startSocketServer(ch chan Message, ip string, port string) {
 		}
 
 		logger.Info("Connection accepted")
-		go handleConnection(conn, ch)
+		go handleConnection(conn, ch, port)
 	}
-
 }

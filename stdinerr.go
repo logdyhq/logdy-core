@@ -9,7 +9,7 @@ import (
 func readOutput(reader io.Reader, outputCh chan Message, messageType LogType) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
-		produce(outputCh, scanner.Text(), messageType)
+		produce(outputCh, scanner.Text(), messageType, nil)
 	}
 }
 
