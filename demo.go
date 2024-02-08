@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"time"
@@ -8,7 +9,7 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 )
 
-func generateRandomData(jsonFormat bool, numPerSec int, ch chan Message) {
+func generateRandomData(jsonFormat bool, numPerSec int, ch chan Message, ctx context.Context) {
 
 	if numPerSec > 100 {
 		numPerSec = 100
@@ -19,6 +20,11 @@ func generateRandomData(jsonFormat bool, numPerSec int, ch chan Message) {
 	}
 
 	for {
+
+		if ctx.Err() != nil {
+			return
+		}
+
 		var msg string
 		if jsonFormat {
 			msg = generateJsonRandomData()

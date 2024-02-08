@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -16,8 +17,9 @@ func TestGenerateJsonRandomData(t *testing.T) {
 
 func TestGenerateRandomData(t *testing.T) {
 	ch := make(chan Message, 100)
+	ctx, cancel := context.WithCancel(context.Background())
 
-	go generateRandomData(true, 100, ch)
+	go generateRandomData(true, 100, ch, ctx)
 
 	i := 0
 	var firstM time.Time
@@ -38,11 +40,13 @@ func TestGenerateRandomData(t *testing.T) {
 
 	assert.Equal(t, msg.IsJson, true)
 	assert.Greater(t, lastM.Sub(firstM).Milliseconds(), int64(90))
+	cancel()
 }
 func TestGenerateRandomData2(t *testing.T) {
 	ch := make(chan Message, 100)
+	ctx, cancel := context.WithCancel(context.Background())
 
-	go generateRandomData(false, 100, ch)
+	go generateRandomData(false, 100, ch, ctx)
 
 	i := 0
 	var firstM time.Time
@@ -61,6 +65,7 @@ func TestGenerateRandomData2(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, msg.IsJson, true)
+	assert.Equal(t, msg.IsJson, false)
 	assert.Greater(t, lastM.Sub(firstM).Milliseconds(), int64(90))
+	cancel()
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -49,12 +50,18 @@ var listenStdCmd = &cobra.Command{
 	Use:   "stdin [command]",
 	Short: "Listens to STDOUT/STDERR of a provided command. Example ./logdy stdin \"npm run dev\"",
 	Long:  ``,
-	Args:  cobra.MinimumNArgs(1),
+	Args:  cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
+
+		if len(args) == 0 {
+			logger.Info("Listen to stdin")
+			go consumeStdin(ch)
+			return
+		}
+
 		logger.WithFields(logrus.Fields{
 			"cmd": args[0],
-		}).Info("Command")
-
+		}).Info("Listen to command stdout")
 		arg := strings.Split(args[0], " ")
 		startCmd(ch, arg[0], arg[1:])
 	},
@@ -98,7 +105,7 @@ var demoSocketCmd = &cobra.Command{
 			panic(err)
 		}
 
-		go generateRandomData(produceJson, num, ch)
+		go generateRandomData(produceJson, num, ch, context.Background())
 	},
 }
 

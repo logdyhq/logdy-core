@@ -22,8 +22,24 @@ func consumeStdinAndForwardToPort(ip string, port string) {
 		logger.WithField("line", string(input)).Debug("Stdin line received")
 		if err != nil {
 			logger.Error("could not process input")
+			return
 		}
 
 		fmt.Fprint(connClient, string(input)+"\n")
+	}
+}
+
+func consumeStdin(ch chan Message) {
+
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		input, _, err := reader.ReadLine()
+		logger.WithField("line", string(input)).Debug("Stdin line received")
+		if err != nil {
+			logger.Error("could not process input")
+			return
+		}
+
+		produce(ch, string(input), MessageTypeStdout, nil)
 	}
 }

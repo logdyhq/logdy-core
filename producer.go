@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/valyala/fastjson"
@@ -30,6 +31,7 @@ func produce(ch chan Message, line string, mt LogType, mo *MessageOrigin) {
 		IsJson:      validJson == nil,
 		BaseMessage: BaseMessage{MessageType: "log"},
 		Origin:      mo,
+		Ts:          time.Now(),
 	}
 }
 
