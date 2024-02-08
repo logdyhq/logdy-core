@@ -1,10 +1,26 @@
 # Logdy - terminal logs in web browser
 
 <p align="center">
-<img src="https://github.com/logdyhq/logdy-core/assets/1653294/9ec8cb3f-0b8f-4523-b600-377444734b9d" height=300/>
+<img src="https://github.com/logdyhq/logdy-core/assets/1653294/9ec8cb3f-0b8f-4523-b600-377444734b9d" height=100/>
 </p>
 
-Supercharge terminal logs with web browser UI and low-code (TypeScript snippets). Save 90% of time searching and browsing logs. It's like **jq, tail, less, grep and awk merged together** and available in a clean UI. **Self-hosted, single binary.**
+<p align="center">
+<strong> <a href="https://logdy.dev">Webpage</a> | 
+<a href="https://demo.logdy.dev">Demo</a> | 
+<a href="https://logdy.dev/docs/quick-start">Docs</a> | 
+<a href="https://github.com/logdyhq/logdy-core/releases">Download</a> | 
+<a href="https://logdy.dev/blog">Blog</a></strong>
+</p>
+
+Supercharge terminal logs with web browser UI and low-code (TypeScript snippets written in the browser). Save 90% of time searching and browsing logs. It's like **jq, tail, less, grep and awk merged together** and available in a clean UI. **Self-hosted, single binary.**
+
+## Project status: Under development 🚧
+
+Logdy is under heavy development and a lot of features is yet to be added. A feedback is welcome from early adopters. Feel free to post [Issues](https://github.com/logdyhq/logdy-core/issues), [Pull Requests](https://github.com/logdyhq/logdy-core/pulls) and contribute in the [Discussions](https://github.com/logdyhq/logdy-core/discussions). Stay tuned for updates, visit [Logdy Blog](https://logdy.dev/blog).
+
+## Demo
+Visit [demo.logdy.dev](https://demo.logdy.dev)
+
 
 ![autogenerate](https://github.com/logdyhq/logdy-core/assets/1653294/bfe09fa8-bbba-46fa-b54d-503f796c7b57)
 
@@ -68,6 +84,8 @@ go run . demo 1
 The above command will start Logdy in `demo` mode with 1 log message produced per second.
 You can read more about [demo mode](https://logdy.dev/docs/demo-mode).
 
+If you would like to develop with UI, check [readme for logdy-ui](https://github.com/logdyhq/logdy-ui) for instructions how to run both together during development.
+
 ## Building
 
 This repository uses static asset embedding during compilation. This way, the UI is served from a single binary. Before you build make sure you copy a compiled [UI](https://github.com/logdyhq/logdy-ui) (follow the instructions about building) in `assets` directory.
@@ -83,7 +101,7 @@ go build
 For a cross architecture build use `gox`. This will generate multiple binaries (in `bin/` dir) for specific architectures, don't forget to update `main.Version` tag.
 ```bash
 gox \
-    -ldflags "-X 'main.Version=0.2.0'" \
+    -ldflags "-X 'main.Version=x.x.x'" \
     -output="bin/{{.Dir}}_{{.OS}}_{{.Arch}}" \
     -osarch="linux/amd64 windows/386 windows/amd64 darwin/amd64 darwin/arm64 linux/arm64"
 ```
