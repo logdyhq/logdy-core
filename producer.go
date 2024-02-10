@@ -2,11 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/valyala/fastjson"
 )
+
+var FallthroughGlobal = false
 
 func produce(ch chan Message, line string, mt LogType, mo *MessageOrigin) {
 	validJson := fastjson.Validate(line)
@@ -28,6 +31,10 @@ func produce(ch chan Message, line string, mt LogType, mo *MessageOrigin) {
 	}
 
 	logger.WithFields(fields).Debug("Producing message")
+
+	if FallthroughGlobal {
+		fmt.Println(line)
+	}
 
 	ch <- Message{
 		Mtype:       mt,

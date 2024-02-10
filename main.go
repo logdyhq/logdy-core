@@ -35,6 +35,7 @@ where you can filter and browse well formatted application output.
 
 		httpPort, _ := cmd.Flags().GetString("port")
 		noanalytics, _ := cmd.Flags().GetBool("no-analytics")
+		FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 		verbose, _ := cmd.Flags().GetBool("verbose")
 
 		if !noanalytics {
@@ -128,6 +129,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose logs")
 	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that help improve this product")
+	rootCmd.PersistentFlags().BoolP("fallthrough", "t", false, "When used will fallthrough all of the stdin received to the terminal as is")
 	demoSocketCmd.PersistentFlags().BoolP("sample-text", "", true, "By default demo data will produce JSON, use this flag to produce raw text")
 	listenSocketCmd.PersistentFlags().StringP("ip", "", "", "IP address to listen to, leave empty to listen on all IP addresses")
 
