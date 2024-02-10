@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -33,7 +34,12 @@ func produce(ch chan Message, line string, mt LogType, mo *MessageOrigin) {
 	logger.WithFields(fields).Debug("Producing message")
 
 	if FallthroughGlobal {
-		fmt.Println(line)
+		if mt == MessageTypeStdout {
+			fmt.Fprintln(os.Stdout, line)
+		}
+		if mt == MessageTypeStderr {
+			fmt.Fprintln(os.Stderr, line)
+		}
 	}
 
 	ch <- Message{
