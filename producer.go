@@ -19,7 +19,12 @@ func produce(ch chan Message, line string, mt LogType, mo *MessageOrigin) {
 		"line": trunc(line, 45),
 	}
 	if mo != nil {
-		fields["origin_port"] = mo.Port
+		if mo.Port != "" {
+			fields["origin_port"] = mo.Port
+		}
+		if mo.File != "" {
+			fields["origin_file"] = mo.File
+		}
 	}
 
 	logger.WithFields(fields).Debug("Producing message")

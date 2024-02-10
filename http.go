@@ -18,7 +18,7 @@ const MessageTypeStderr LogType = 2
 
 type MessageOrigin struct {
 	Port string `json:"port"`
-	File string `josn:"file"`
+	File string `json:"file"`
 }
 
 type Message struct {
@@ -163,7 +163,7 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool) {
 			if err != nil {
 				logger.Error("Err", err)
 				clients.Close(clientId)
-				logger.Info("Closed client", clientId)
+				logger.WithField("client_id", clientId).Info("Closed client")
 				break
 			}
 		}

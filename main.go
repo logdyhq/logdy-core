@@ -19,7 +19,6 @@ var rootCmd = &cobra.Command{
 	Use:     "logdy [command]",
 	Short:   "Logdy",
 	Version: Version,
-	Args:    cobra.MinimumNArgs(1),
 	Long: `Visit https://logdy.dev for more info!
 Logdy is a hackable web UI for all kinds of logs produced locally. 
 Break free from the terminal and stream your logs in any format to a web UI 
@@ -28,6 +27,12 @@ where you can filter and browse well formatted application output.
 	Run: func(cmd *cobra.Command, args []string) {
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+
+		if len(args) == 0 {
+			logger.Info("Listen to stdin (from pipe)")
+			go consumeStdin(ch)
+		}
+
 		httpPort, _ := cmd.Flags().GetString("port")
 		noanalytics, _ := cmd.Flags().GetBool("no-analytics")
 		verbose, _ := cmd.Flags().GetBool("verbose")
@@ -48,13 +53,12 @@ where you can filter and browse well formatted application output.
 
 var listenStdCmd = &cobra.Command{
 	Use:   "stdin [command]",
-	Short: "Listens to STDOUT/STDERR of a provided command. Example ./logdy stdin \"npm run dev\"",
+	Short: "Listens to STDOUT/STDERR of a provided command. Example `logdy stdin \"npm run dev\"`",
 	Long:  ``,
-	Args:  cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if len(args) == 0 {
-			logger.Info("Listen to stdin")
+			logger.Info("Listen to stdin (from pipe)")
 			go consumeStdin(ch)
 			return
 		}
@@ -66,9 +70,20 @@ var listenStdCmd = &cobra.Command{
 		startCmd(ch, arg[0], arg[1:])
 	},
 }
+
+var followCmd = &cobra.Command{
+	Use:   "follow <file1> [<file2> ... <fileN>]",
+	Short: "Follows lines added to files. Example `logdy follow foo.log /var/log/bar.log`",
+	Long:  ``,
+	Args:  cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		followFiles(ch, args)
+	},
+}
+
 var forwardCmd = &cobra.Command{
-	Use:   "forward [port]",
-	Short: "Forwards the STDIN to a specified port, example \"tail -f file.log | logdy forward 8123\"",
+	Use:   "forward <port>",
+	Short: "Forwards the STDIN to a specified port, example `tail -f file.log | logdy forward 8123`",
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -79,16 +94,13 @@ var forwardCmd = &cobra.Command{
 }
 
 var listenSocketCmd = &cobra.Command{
-	Use:   "socket [port(s)]",
-	Short: "Sets up a port to listen on for incoming log messages. Example ./logdy socket 8233. You can setup multiple ports ./logdy socket 8123,8124,8125",
+	Use:   "socket <port1> [<port2> ... <portN>]",
+	Short: "Sets up a port to listen on for incoming log messages. Example `logdy socket 8233`. You can setup multiple ports `logdy socket 8123 8124 8125`",
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ip, _ := cmd.Flags().GetString("ip")
-
-		ports := strings.Split(args[0], ",")
-
-		go startSocketServers(ch, ip, ports)
+		go startSocketServers(ch, ip, args)
 	},
 }
 
@@ -96,13 +108,15 @@ var demoSocketCmd = &cobra.Command{
 	Use:   "demo [number]",
 	Short: "Starts a demo mode, random logs will be produced, the [number] defines a number of messages produced per second",
 	Long:  ``,
-	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		produceJson := !cmd.Flag("sample-text").Changed
-		num, err := strconv.Atoi(args[0])
-
-		if err != nil {
-			panic(err)
+		num := 1
+		if len(args) == 1 {
+			var err error
+			num, err = strconv.Atoi(args[0])
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		go generateRandomData(produceJson, num, ch, context.Background())
@@ -123,6 +137,7 @@ func init() {
 	rootCmd.AddCommand(listenSocketCmd)
 	rootCmd.AddCommand(forwardCmd)
 	rootCmd.AddCommand(demoSocketCmd)
+	rootCmd.AddCommand(followCmd)
 
 }
 
