@@ -45,7 +45,8 @@ type BaseMessage struct {
 
 type InitMessage struct {
 	BaseMessage
-	AnalyticsEnabled bool
+	AnalyticsEnabled bool `json:"analyticsEnabled"`
+	AuthRequired     bool `json:"authRequired"`
 }
 
 func (c *Clients) Start() {
@@ -92,7 +93,7 @@ func (c *Clients) Close(id int) {
 	c.currentlyConnected--
 }
 
-func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool) {
+func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiPass string) {
 	// Create a new WebSocket server.
 	wsUpgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -120,8 +121,47 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool) {
 	fs := http.FileServer(http.FS(assets))
 	http.Handle("/", http.StripPrefix("/", fs))
 
+	http.HandleFunc("/api/check-pass", func(w http.ResponseWriter, r *http.Request) {
+		pass := r.URL.Query().Get("password")
+		if pass == "" || uiPass != pass {
+			logger.WithFields(logrus.Fields{
+				"ip": r.RemoteAddr,
+				"ua": r.Header.Get("user-agent"),
+			}).Info("Client denied")
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		w.WriteHeader(200)
+	})
+
+	http.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
+		initMsg, _ := json.Marshal(InitMessage{
+			BaseMessage: BaseMessage{
+				MessageType: "init",
+			},
+			AnalyticsEnabled: analyticsEnabled,
+			AuthRequired:     uiPass != "",
+		})
+
+		w.Write(initMsg)
+	})
+
 	// Listen for WebSocket connections on port 8080.
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+
+		if uiPass != "" {
+			pass := r.URL.Query().Get("password")
+			if pass == "" || uiPass != pass {
+				logger.WithFields(logrus.Fields{
+					"ip": r.RemoteAddr,
+					"ua": r.Header.Get("user-agent"),
+				}).Info("Client denied")
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+		}
+
 		// Upgrade the HTTP connection to a WebSocket connection.
 		conn, err := wsUpgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -142,6 +182,18 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool) {
 			AnalyticsEnabled: analyticsEnabled,
 		})
 		conn.WriteMessage(1, initMsg)
+
+		go func() {
+			for {
+				time.Sleep(1 * time.Second)
+				_, _, err := conn.ReadMessage()
+				if err != nil {
+					logger.Error(err)
+					clients.Close(cid)
+					return
+				}
+			}
+		}()
 
 		for {
 			msg := <-ch

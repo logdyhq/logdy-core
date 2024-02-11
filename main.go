@@ -34,6 +34,7 @@ where you can filter and browse well formatted application output.
 		}
 
 		httpPort, _ := cmd.Flags().GetString("port")
+		uiPass, _ := cmd.Flags().GetString("ui-pass")
 		noanalytics, _ := cmd.Flags().GetBool("no-analytics")
 		FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 		verbose, _ := cmd.Flags().GetBool("verbose")
@@ -48,7 +49,7 @@ where you can filter and browse well formatted application output.
 			logger.SetLevel(logrus.InfoLevel)
 		}
 
-		handleHttp(ch, httpPort, !noanalytics)
+		handleHttp(ch, httpPort, !noanalytics, uiPass)
 	},
 }
 
@@ -127,6 +128,7 @@ var demoSocketCmd = &cobra.Command{
 func init() {
 	ch = make(chan Message, 1000)
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
+	rootCmd.PersistentFlags().StringP("ui-pass", "", "", "Password that will be used to authenticate in the UI")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose logs")
 	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that help improve this product")
 	rootCmd.PersistentFlags().BoolP("fallthrough", "t", false, "When used will fallthrough all of the stdin received to the terminal as is")
