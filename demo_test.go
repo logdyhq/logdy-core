@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -22,8 +21,8 @@ func TestGenerateRandomData(t *testing.T) {
 	go generateRandomData(true, 100, ch, ctx)
 
 	i := 0
-	var firstM time.Time
-	var lastM time.Time
+	var firstM int64
+	var lastM int64
 	var msg Message
 	for {
 		msg = <-ch
@@ -39,7 +38,7 @@ func TestGenerateRandomData(t *testing.T) {
 	}
 
 	assert.Equal(t, msg.IsJson, true)
-	assert.Greater(t, lastM.Sub(firstM).Milliseconds(), int64(90))
+	assert.Greater(t, lastM-firstM, int64(90))
 	cancel()
 }
 func TestGenerateRandomData2(t *testing.T) {
@@ -49,8 +48,8 @@ func TestGenerateRandomData2(t *testing.T) {
 	go generateRandomData(false, 100, ch, ctx)
 
 	i := 0
-	var firstM time.Time
-	var lastM time.Time
+	var firstM int64
+	var lastM int64
 	var msg Message
 	for {
 		msg = <-ch
@@ -66,6 +65,6 @@ func TestGenerateRandomData2(t *testing.T) {
 	}
 
 	assert.Equal(t, msg.IsJson, false)
-	assert.Greater(t, lastM.Sub(firstM).Milliseconds(), int64(90))
+	assert.Greater(t, lastM-firstM, int64(90))
 	cancel()
 }

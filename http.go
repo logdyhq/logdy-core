@@ -27,7 +27,7 @@ type Message struct {
 	Content     string          `json:"content"`
 	JsonContent json.RawMessage `json:"json_content"`
 	IsJson      bool            `json:"is_json"`
-	Ts          time.Time       `json:"ts"`
+	Ts          int64           `json:"ts"`
 	Origin      *MessageOrigin  `json:"origin"`
 }
 

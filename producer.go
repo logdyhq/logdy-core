@@ -49,7 +49,7 @@ func produce(ch chan Message, line string, mt LogType, mo *MessageOrigin) {
 		IsJson:      validJson == nil,
 		BaseMessage: BaseMessage{MessageType: "log"},
 		Origin:      mo,
-		Ts:          time.Now(),
+		Ts:          time.Now().UnixMilli(),
 	}
 }
 
