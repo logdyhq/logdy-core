@@ -13,7 +13,7 @@ import (
 
 var ch chan Message
 
-var Version = "0.0.0"
+var Version = "0.4.0"
 
 var rootCmd = &cobra.Command{
 	Use:     "logdy [command]",
@@ -27,6 +27,11 @@ where you can filter and browse well formatted application output.
 	Run: func(cmd *cobra.Command, args []string) {
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+
+		noupdates, _ := cmd.Flags().GetBool("no-updates")
+		if !noupdates {
+			go checkUpdatesAndPrintInfo()
+		}
 
 		if len(args) == 0 {
 			logger.Info("Listen to stdin (from pipe)")
@@ -130,7 +135,8 @@ func init() {
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
 	rootCmd.PersistentFlags().StringP("ui-pass", "", "", "Password that will be used to authenticate in the UI")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose logs")
-	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that help improve this product")
+	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that helps improve Logdy")
+	rootCmd.PersistentFlags().BoolP("no-updates", "u", false, "Opt-out from checking updates on program startup")
 	rootCmd.PersistentFlags().BoolP("fallthrough", "t", false, "When used will fallthrough all of the stdin received to the terminal as is")
 	demoSocketCmd.PersistentFlags().BoolP("sample-text", "", true, "By default demo data will produce JSON, use this flag to produce raw text")
 	listenSocketCmd.PersistentFlags().StringP("ip", "", "", "IP address to listen to, leave empty to listen on all IP addresses")
@@ -142,7 +148,6 @@ func init() {
 	rootCmd.AddCommand(forwardCmd)
 	rootCmd.AddCommand(demoSocketCmd)
 	rootCmd.AddCommand(followCmd)
-
 }
 
 func main() {

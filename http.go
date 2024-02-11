@@ -122,7 +122,13 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiP
 	http.Handle("/", http.StripPrefix("/", fs))
 
 	http.HandleFunc("/api/check-pass", func(w http.ResponseWriter, r *http.Request) {
+		logger.Debug("/api/check-pass")
 		pass := r.URL.Query().Get("password")
+		if uiPass == "" {
+			w.WriteHeader(200)
+			return
+		}
+
 		if pass == "" || uiPass != pass {
 			logger.WithFields(logrus.Fields{
 				"ip": r.RemoteAddr,
@@ -136,6 +142,7 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiP
 	})
 
 	http.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
+		logger.Debug("/api/status")
 		initMsg, _ := json.Marshal(InitMessage{
 			BaseMessage: BaseMessage{
 				MessageType: "init",
@@ -175,20 +182,13 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiP
 		clientId := cid
 		ch := clients.Join(cid)
 
-		initMsg, _ := json.Marshal(InitMessage{
-			BaseMessage: BaseMessage{
-				MessageType: "init",
-			},
-			AnalyticsEnabled: analyticsEnabled,
-		})
-		conn.WriteMessage(1, initMsg)
-
 		go func() {
 			for {
 				time.Sleep(1 * time.Second)
 				_, _, err := conn.ReadMessage()
 				if err != nil {
-					logger.Error(err)
+					logger.Debug(err)
+					logger.WithField("client_id", clientId).Info("Closed client")
 					clients.Close(cid)
 					return
 				}

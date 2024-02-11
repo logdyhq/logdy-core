@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -16,7 +15,7 @@ func initLogger() {
 		Formatter: &log.TextFormatter{
 			DisableColors:   false,
 			FullTimestamp:   true,
-			TimestampFormat: time.RFC3339Nano,
+			TimestampFormat: "15:04:05.999",
 		},
 	}
 }

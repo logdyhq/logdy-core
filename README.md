@@ -61,20 +61,21 @@ Usage:
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
   demo        Starts a demo mode, random logs will be produced, the [number] defines a number of messages produced per second
-  follow      Follows lines added to files. Example `$ logdy follow foo.log /var/log/bar.log`
-  forward     Forwards the STDIN to a specified port, example "tail -f file.log | logdy forward 8123"
+  follow      Follows lines added to files. Example `logdy follow foo.log /var/log/bar.log`
+  forward     Forwards the STDIN to a specified port, example `tail -f file.log | logdy forward 8123`
   help        Help about any command
-  socket      Sets up a port to listen on for incoming log messages. Example ./logdy socket 8233. You can setup multiple ports ./logdy socket 8123 8124 8125
-  stdin       Listens to STDOUT/STDERR of a provided command. Example ./logdy stdin "npm run dev"
+  socket      Sets up a port to listen on for incoming log messages. Example `logdy socket 8233`. You can setup multiple ports `logdy socket 8123 8124 8125`
+  stdin       Listens to STDOUT/STDERR of a provided command. Example `logdy stdin "npm run dev"`
 
 Flags:
-  -h, --help           help for logdy
-  -n, --no-analytics   Opt-out from sending anonymous analytical data that help improve this product
-  -p, --port string    Port on which the Web UI will be served (default "8080")
-  -v, --verbose        Verbose logs
-      --version        version for logdy
-
-Use "logdy [command] --help" for more information about a command.
+  -t, --fallthrough      When used will fallthrough all of the stdin received to the terminal as is
+  -h, --help             help for logdy
+  -n, --no-analytics     Opt-out from sending anonymous analytical data that helps improve Logdy
+  -u, --no-updates       Opt-out from checking updates on program startup
+  -p, --port string      Port on which the Web UI will be served (default "8080")
+      --ui-pass string   Password that will be used to authenticate in the UI
+  -v, --verbose          Verbose logs
+      --version          version for logdy
 ```
 
 ## Development
