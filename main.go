@@ -40,6 +40,7 @@ where you can filter and browse well formatted application output.
 
 		httpPort, _ := cmd.Flags().GetString("port")
 		uiPass, _ := cmd.Flags().GetString("ui-pass")
+		configFile, _ := cmd.Flags().GetString("config")
 		noanalytics, _ := cmd.Flags().GetBool("no-analytics")
 		FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 		verbose, _ := cmd.Flags().GetBool("verbose")
@@ -54,7 +55,7 @@ where you can filter and browse well formatted application output.
 			logger.SetLevel(logrus.InfoLevel)
 		}
 
-		handleHttp(ch, httpPort, !noanalytics, uiPass)
+		handleHttp(ch, httpPort, !noanalytics, uiPass, configFile)
 	},
 }
 
@@ -134,6 +135,7 @@ func init() {
 	ch = make(chan Message, 1000)
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
 	rootCmd.PersistentFlags().StringP("ui-pass", "", "", "Password that will be used to authenticate in the UI")
+	rootCmd.PersistentFlags().StringP("config", "", "", "Path to a file where a config (json) for the UI is located")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose logs")
 	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that helps improve Logdy")
 	rootCmd.PersistentFlags().BoolP("no-updates", "u", false, "Opt-out from checking updates on program startup")

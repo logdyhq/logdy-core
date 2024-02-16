@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -45,8 +47,9 @@ type BaseMessage struct {
 
 type InitMessage struct {
 	BaseMessage
-	AnalyticsEnabled bool `json:"analyticsEnabled"`
-	AuthRequired     bool `json:"authRequired"`
+	AnalyticsEnabled bool   `json:"analyticsEnabled"`
+	AuthRequired     bool   `json:"authRequired"`
+	ConfigStr        string `json:"configStr"`
 }
 
 func (c *Clients) Start() {
@@ -93,7 +96,25 @@ func (c *Clients) Close(id int) {
 	c.currentlyConnected--
 }
 
-func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiPass string) {
+func loadFile(configFilePath string) string {
+	f, err := os.OpenFile(configFilePath, os.O_RDONLY, 0644)
+
+	if err != nil {
+		logger.Error("Error while loading config file")
+		panic(err)
+	}
+
+	bytes, err := io.ReadAll(f)
+
+	if err != nil {
+		logger.Error("Error while loading config file")
+		panic(err)
+	}
+
+	return string(bytes)
+}
+
+func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiPass string, configFilePath string) {
 	// Create a new WebSocket server.
 	wsUpgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -143,12 +164,20 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiP
 
 	http.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
 		logger.Debug("/api/status")
+
+		configStr := ""
+		if configFilePath != "" {
+			logger.Debug("Reading config file")
+			configStr = loadFile(configFilePath)
+		}
+
 		initMsg, _ := json.Marshal(InitMessage{
 			BaseMessage: BaseMessage{
 				MessageType: "init",
 			},
 			AnalyticsEnabled: analyticsEnabled,
 			AuthRequired:     uiPass != "",
+			ConfigStr:        configStr,
 		})
 
 		w.Write(initMsg)
