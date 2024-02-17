@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const BULK_WINDOW_MS = 300
+var BULK_WINDOW_MS int64 = 100
 
 type Client struct {
 	done   chan struct{}
@@ -27,7 +27,7 @@ func (c *Client) close() {
 // in a very short timespan
 func (c *Client) startBufferFlushLoop() {
 	for {
-		time.Sleep(time.Millisecond * BULK_WINDOW_MS)
+		time.Sleep(time.Millisecond * time.Duration(BULK_WINDOW_MS))
 		select {
 		case <-c.done:
 			logger.Debug("Client: received done signal, quitting")
@@ -37,7 +37,6 @@ func (c *Client) startBufferFlushLoop() {
 		default:
 
 			if len(c.buffer) == 0 {
-				logger.Debug("No messages")
 				continue
 			}
 
@@ -127,7 +126,7 @@ func (c *Clients) Join(id int) *Client {
 func (c *Clients) Close(id int) {
 
 	if _, ok := c.clients[id]; !ok {
-		panic("Client doesnt exist")
+		return
 	}
 
 	c.mu.Lock()

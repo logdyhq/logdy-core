@@ -109,16 +109,10 @@ func TestClientSignalQuit(t *testing.T) {
 }
 
 func TestClientCloseError(t *testing.T) {
-
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		}
-	}()
-
 	ch := make(chan Message)
 	c := NewClients(ch)
 	go c.Start()
 
+	c.Close(1)
 	c.Close(1)
 }

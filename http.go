@@ -96,18 +96,18 @@ func handleWs(uiPass string, msgs <-chan Message) func(w http.ResponseWriter, r 
 		clientId := cid
 		ch := clients.Join(cid)
 
-		go func() {
+		go func(clienId int) {
 			for {
 				time.Sleep(1 * time.Second)
 				_, _, err := conn.ReadMessage()
 				if err != nil {
 					logger.Debug(err)
 					logger.WithField("client_id", clientId).Info("Closed client")
-					clients.Close(cid)
+					clients.Close(clientId)
 					return
 				}
 			}
-		}()
+		}(clientId)
 
 		for {
 			msgs := <-ch.ch
@@ -149,8 +149,10 @@ func handleWs(uiPass string, msgs <-chan Message) func(w http.ResponseWriter, r 
 	}
 }
 
-func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiPass string, configFilePath string) {
+func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiPass string, configFilePath string, bulkWindowMs int64) {
 	assets, _ := Assets()
+
+	BULK_WINDOW_MS = bulkWindowMs
 
 	// Use the file system to serve static files
 	fs := http.FileServer(http.FS(assets))

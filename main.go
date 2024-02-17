@@ -44,6 +44,7 @@ where you can filter and browse well formatted application output.
 		noanalytics, _ := cmd.Flags().GetBool("no-analytics")
 		FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 		verbose, _ := cmd.Flags().GetBool("verbose")
+		bulkWindow, _ := cmd.Flags().GetInt64("bulk-window")
 
 		if !noanalytics {
 			logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
@@ -55,7 +56,7 @@ where you can filter and browse well formatted application output.
 			logger.SetLevel(logrus.InfoLevel)
 		}
 
-		handleHttp(ch, httpPort, !noanalytics, uiPass, configFile)
+		handleHttp(ch, httpPort, !noanalytics, uiPass, configFile, bulkWindow)
 	},
 }
 
@@ -136,6 +137,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
 	rootCmd.PersistentFlags().StringP("ui-pass", "", "", "Password that will be used to authenticate in the UI")
 	rootCmd.PersistentFlags().StringP("config", "", "", "Path to a file where a config (json) for the UI is located")
+	rootCmd.PersistentFlags().Int64P("bulk-window", "", 100, "A time window during which log messages are gathered and send in a bulk to a client. Decreasing this window will improve the 'real-time' feeling of messages presented on the screen but could decrease UI performance")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose logs")
 	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that helps improve Logdy")
 	rootCmd.PersistentFlags().BoolP("no-updates", "u", false, "Opt-out from checking updates on program startup")
