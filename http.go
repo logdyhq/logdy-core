@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -58,13 +57,7 @@ func handleStatus(configFilePath string, analyticsEnabled bool, uiPass string) f
 }
 
 func handleWs(uiPass string, msgs <-chan Message) func(w http.ResponseWriter, r *http.Request) {
-	clients := Clients{
-		mu:                 sync.Mutex{},
-		mainChan:           msgs,
-		clients:            map[int]*Client{},
-		currentlyConnected: 0,
-		buffer:             []Message{},
-	}
+	clients := NewClients(msgs)
 
 	go clients.Start()
 

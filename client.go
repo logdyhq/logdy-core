@@ -7,6 +7,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const BULK_WINDOW_MS = 300
+
 type Client struct {
 	done   chan struct{}
 	ch     chan []Message
@@ -19,9 +21,13 @@ func (c *Client) handleMessage(m Message) {
 func (c *Client) close() {
 	c.done <- struct{}{}
 }
+
+// Messages are delivered in bulks to avoid
+// ddossing the client (browser) with too many messages produced
+// in a very short timespan
 func (c *Client) startBufferFlushLoop() {
 	for {
-		time.Sleep(time.Millisecond * 300)
+		time.Sleep(time.Millisecond * BULK_WINDOW_MS)
 		select {
 		case <-c.done:
 			logger.Debug("Client: received done signal, quitting")
@@ -63,6 +69,16 @@ type Clients struct {
 	currentlyConnected int
 }
 
+func NewClients(msgs <-chan Message) *Clients {
+	return &Clients{
+		mu:                 sync.Mutex{},
+		mainChan:           msgs,
+		clients:            map[int]*Client{},
+		currentlyConnected: 0,
+		buffer:             []Message{},
+	}
+}
+
 func (c *Clients) Start() {
 	for {
 		msg := <-c.mainChan
@@ -80,8 +96,17 @@ func (c *Clients) Start() {
 }
 
 func (c *Clients) Join(id int) *Client {
+
+	if _, ok := c.clients[id]; ok {
+		panic("Client already exists")
+	}
+
 	c.mu.Lock()
 	defer func() {
+		if len(c.buffer) == 0 {
+			return
+		}
+
 		logger.WithFields(logrus.Fields{
 			"msg_count": len(c.buffer),
 		}).Info("Flushing log messages buffer to a recently connected client")
@@ -100,6 +125,11 @@ func (c *Clients) Join(id int) *Client {
 }
 
 func (c *Clients) Close(id int) {
+
+	if _, ok := c.clients[id]; !ok {
+		panic("Client doesnt exist")
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
