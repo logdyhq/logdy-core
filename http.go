@@ -3,9 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
@@ -13,136 +11,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type LogType int
-
-const MessageTypeStdout LogType = 1
-const MessageTypeStderr LogType = 2
-
-type MessageOrigin struct {
-	Port string `json:"port"`
-	File string `json:"file"`
-}
-
-type Message struct {
-	BaseMessage
-	Mtype       LogType         `json:"log_type"`
-	Content     string          `json:"content"`
-	JsonContent json.RawMessage `json:"json_content"`
-	IsJson      bool            `json:"is_json"`
-	Ts          int64           `json:"ts"`
-	Origin      *MessageOrigin  `json:"origin"`
-}
-
-type Clients struct {
-	mu                 sync.Mutex
-	mainChan           <-chan Message
-	clients            map[int]chan Message
-	buffer             []Message
-	currentlyConnected int
-}
-
-type BaseMessage struct {
-	MessageType string `json:"message_type"`
-}
-
-type InitMessage struct {
-	BaseMessage
-	AnalyticsEnabled bool   `json:"analyticsEnabled"`
-	AuthRequired     bool   `json:"authRequired"`
-	ConfigStr        string `json:"configStr"`
-}
-
-func (c *Clients) Start() {
-	for {
-		msg := <-c.mainChan
-		c.mu.Lock()
-		if c.currentlyConnected == 0 {
-			logger.Debug("Received a log message but no client is connected, buffering message")
-			c.buffer = append(c.buffer, msg)
-		}
-
-		for _, ch := range c.clients {
-
-			ch <- msg
-		}
-		c.mu.Unlock()
-	}
-}
-
-func (c *Clients) Join(id int) <-chan Message {
-	c.mu.Lock()
-	defer func() {
-		logger.WithFields(logrus.Fields{
-			"msg_count": len(c.buffer),
-		}).Info("Flushing log messages buffer to a recently connected client")
-		for _, msg := range c.buffer {
-			c.clients[id] <- msg
-		}
-
-		c.buffer = []Message{}
-	}()
-	defer c.mu.Unlock()
-
-	c.clients[id] = make(chan Message, 100)
-	c.currentlyConnected++
-	return c.clients[id]
-}
-
-func (c *Clients) Close(id int) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	delete(c.clients, id)
-	c.currentlyConnected--
-}
-
-func loadFile(configFilePath string) string {
-	f, err := os.OpenFile(configFilePath, os.O_RDONLY, 0644)
-
-	if err != nil {
-		logger.Error("Error while loading config file")
-		panic(err)
-	}
-
-	bytes, err := io.ReadAll(f)
-
-	if err != nil {
-		logger.Error("Error while loading config file")
-		panic(err)
-	}
-
-	return string(bytes)
-}
-
-func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiPass string, configFilePath string) {
-	// Create a new WebSocket server.
-	wsUpgrader := websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
-
-	clients := Clients{
-		mu:                 sync.Mutex{},
-		mainChan:           msgs,
-		clients:            map[int]chan Message{},
-		currentlyConnected: 0,
-		buffer:             []Message{},
-	}
-
-	go clients.Start()
-
-	cid := 0
-
-	assets, _ := Assets()
-
-	// Use the file system to serve static files
-	fs := http.FileServer(http.FS(assets))
-	http.Handle("/", http.StripPrefix("/", fs))
-
-	http.HandleFunc("/api/check-pass", func(w http.ResponseWriter, r *http.Request) {
+func handleCheckPass(uiPass string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Debug("/api/check-pass")
 		pass := r.URL.Query().Get("password")
 		if uiPass == "" {
@@ -160,9 +30,12 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiP
 		}
 
 		w.WriteHeader(200)
-	})
+	}
+}
 
-	http.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
+func handleStatus(configFilePath string, analyticsEnabled bool, uiPass string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+
 		logger.Debug("/api/status")
 
 		configStr := ""
@@ -173,7 +46,7 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiP
 
 		initMsg, _ := json.Marshal(InitMessage{
 			BaseMessage: BaseMessage{
-				MessageType: "init",
+				MessageType: MessageTypeInit,
 			},
 			AnalyticsEnabled: analyticsEnabled,
 			AuthRequired:     uiPass != "",
@@ -181,10 +54,29 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiP
 		})
 
 		w.Write(initMsg)
-	})
+	}
+}
 
-	// Listen for WebSocket connections on port 8080.
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+func handleWs(uiPass string, msgs <-chan Message) func(w http.ResponseWriter, r *http.Request) {
+	clients := Clients{
+		mu:                 sync.Mutex{},
+		mainChan:           msgs,
+		clients:            map[int]*Client{},
+		currentlyConnected: 0,
+		buffer:             []Message{},
+	}
+
+	go clients.Start()
+
+	wsUpgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+	cid := 0
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		if uiPass != "" {
 			pass := r.URL.Query().Get("password")
@@ -225,16 +117,28 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiP
 		}()
 
 		for {
-			msg := <-ch
-			bts, err := json.Marshal(msg)
+			msgs := <-ch.ch
+			bulk := MessageBulk{
+				BaseMessage: BaseMessage{
+					MessageType: MessageTypeLogBulk,
+				},
+				Messages: msgs,
+			}
 
-			logger.WithFields(logrus.Fields{
-				"msg":      trunc(string(bts), 45),
-				"clientId": clientId,
-			}).Debug("Sending message through WebSocket")
+			logger.WithField("count", len(msgs)).Debug("Received messages")
 
+			if logger.Level <= logrus.DebugLevel {
+				for _, msg := range msgs {
+					mbts, _ := json.Marshal(msg)
+					logger.WithFields(logrus.Fields{
+						"msg":      trunc(string(mbts), 45),
+						"clientId": clientId,
+					}).Debug("Sending message through WebSocket")
+				}
+			}
+
+			bts, err := json.Marshal(bulk)
 			if err != nil {
-				fmt.Printf("Received message %+v", msg)
 				fmt.Println("Error while serializing message", err)
 				continue
 			}
@@ -249,7 +153,21 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiP
 			}
 		}
 
-	})
+	}
+}
+
+func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiPass string, configFilePath string) {
+	assets, _ := Assets()
+
+	// Use the file system to serve static files
+	fs := http.FileServer(http.FS(assets))
+	http.Handle("/", http.StripPrefix("/", fs))
+
+	http.HandleFunc("/api/check-pass", handleCheckPass(uiPass))
+	http.HandleFunc("/api/status", handleStatus(configFilePath, analyticsEnabled, uiPass))
+
+	// Listen for WebSocket connections on port 8080.
+	http.HandleFunc("/ws", handleWs(uiPass, msgs))
 
 	logger.WithFields(logrus.Fields{
 		"port": httpPort,
