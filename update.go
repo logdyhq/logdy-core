@@ -63,6 +63,7 @@ func checkUpdatesAndPrintInfo() {
 
 	if err != nil {
 		logger.WithField("error", err).Error("Error while checking for Logdy updates")
+		return
 	}
 
 	if update.CurrentVersion == Version {
