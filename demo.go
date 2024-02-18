@@ -16,7 +16,7 @@ func generateRandomData(jsonFormat bool, numPerSec int, ch chan Message, ctx con
 	}
 
 	if numPerSec <= 0 {
-		numPerSec = 1
+		return // produce no data, so just leave
 	}
 
 	for {
@@ -39,6 +39,7 @@ func generateRandomData(jsonFormat bool, numPerSec int, ch chan Message, ctx con
 
 func generateTextRandomData() string {
 	return strings.Join([]string{
+		time.Now().Format("15:04:05.0000"),
 		gofakeit.UUID(),
 		gofakeit.DomainName(),
 		gofakeit.IPv4Address(),
@@ -51,6 +52,7 @@ func generateTextRandomData() string {
 
 func generateJsonRandomData() string {
 	val, _ := json.Marshal(map[string]string{
+		"ts":     time.Now().Format("15:04:05.0000"),
 		"uuid":   gofakeit.UUID(),
 		"domain": gofakeit.DomainName(),
 		"ipv4":   gofakeit.IPv4Address(),

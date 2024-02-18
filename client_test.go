@@ -94,7 +94,7 @@ func TestClientBulkWindow(t *testing.T) {
 	messages := <-client1.ch
 
 	assert.Equal(t, 3, len(messages))
-	assert.GreaterOrEqual(t, int(time.Since(ts).Milliseconds()), BULK_WINDOW_MS)
+	assert.GreaterOrEqual(t, int64(time.Since(ts).Milliseconds()), BULK_WINDOW_MS)
 	assert.Equal(t, "foo1", messages[0].Content)
 	assert.Equal(t, "foo2", messages[1].Content)
 	assert.Equal(t, "foo3", messages[2].Content)

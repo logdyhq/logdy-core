@@ -124,13 +124,12 @@ func (c *Clients) Join(id int) *Client {
 }
 
 func (c *Clients) Close(id int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	if _, ok := c.clients[id]; !ok {
 		return
 	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
 
 	cl := c.clients[id]
 	cl.close()
