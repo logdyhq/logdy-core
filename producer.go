@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -43,6 +44,7 @@ func produce(ch chan Message, line string, mt LogType, mo *MessageOrigin) {
 	}
 
 	ch <- Message{
+		Id:          strconv.FormatInt(time.Now().UnixMicro(), 10),
 		Mtype:       mt,
 		Content:     line,
 		JsonContent: cs,

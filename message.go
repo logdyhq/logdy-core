@@ -18,6 +18,7 @@ type MessageOrigin struct {
 
 type Message struct {
 	BaseMessage
+	Id          string          `json:"id"`
 	Mtype       LogType         `json:"log_type"`
 	Content     string          `json:"content"`
 	JsonContent json.RawMessage `json:"json_content"`
