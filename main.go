@@ -13,7 +13,7 @@ import (
 
 var ch chan Message
 
-var Version = "0.4.0"
+var Version = "0.5.0"
 
 var rootCmd = &cobra.Command{
 	Use:     "logdy [command]",
