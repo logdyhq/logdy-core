@@ -14,9 +14,11 @@
 
 Supercharge terminal logs with web browser UI and low-code (TypeScript snippets written in the browser). Save 90% of time searching and browsing logs. It's like **jq, tail, less, grep and awk merged together** and available in a clean UI. **Self-hosted, single binary.**
 
-## Project status: Under development 🚧
+## Project status: Beta version, new features added actively
 
 Logdy is under heavy development and a lot of features is yet to be added. A feedback is welcome from early adopters. Feel free to post [Issues](https://github.com/logdyhq/logdy-core/issues), [Pull Requests](https://github.com/logdyhq/logdy-core/pulls) and contribute in the [Discussions](https://github.com/logdyhq/logdy-core/discussions). Stay tuned for updates, visit [Logdy Blog](https://logdy.dev/blog).
+
+[Read latest v0.5 announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v05#performance-delivering-logs-in-bulks)
 
 ## Demo
 Visit [demo.logdy.dev](https://demo.logdy.dev)
