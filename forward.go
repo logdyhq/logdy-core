@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"os"
 )
@@ -21,7 +22,7 @@ func consumeStdinAndForwardToPort(ip string, port string) {
 		input, _, err := reader.ReadLine()
 		logger.WithField("line", string(input)).Debug("Stdin line received")
 		if err != nil {
-			logger.Error("could not process input")
+			logger.Error("could not process input", err)
 			return
 		}
 
@@ -35,8 +36,14 @@ func consumeStdin(ch chan Message) {
 	for {
 		input, _, err := reader.ReadLine()
 		logger.WithField("line", string(input)).Debug("Stdin line received")
+
+		if err == io.EOF {
+			logger.Debug("EOF")
+			return
+		}
+
 		if err != nil {
-			logger.Error("could not process input")
+			logger.Error("could not process input in stdin", err)
 			return
 		}
 

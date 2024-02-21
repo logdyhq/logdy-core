@@ -12,13 +12,15 @@
 <a href="https://logdy.dev/blog">Blog</a></strong>
 </p>
 
-Supercharge terminal logs with web browser UI and low-code (TypeScript snippets written in the browser). Save 90% of time searching and browsing logs. It's like **jq, tail, less, grep and awk merged together** and available in a clean UI. **Self-hosted, single binary.**
+### Latest version: 0.5 (19 Feb 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v05#performance-delivering-logs-in-bulks)
 
-## Project status: Beta version, new features added actively
+Logdy is a single-binary that you add to your PATH so it's available just like any other tool: grep, awk, sed, jq. **No installations, no deployments, no compilations**. It works locally, so it's also secure. [Read more](https://logdy.dev/docs/what-is-logdy).
 
-Logdy is under heavy development and a lot of features is yet to be added. A feedback is welcome from early adopters. Feel free to post [Issues](https://github.com/logdyhq/logdy-core/issues), [Pull Requests](https://github.com/logdyhq/logdy-core/pulls) and contribute in the [Discussions](https://github.com/logdyhq/logdy-core/discussions). Stay tuned for updates, visit [Logdy Blog](https://logdy.dev/blog).
-
-[Read latest v0.5 announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v05#performance-delivering-logs-in-bulks)
+```bash
+# use with any shell command
+$ tail -f file.log | logdy
+INFO[2024-02...] WebUI started, visit http://localhost:8080    port=8080
+```
 
 ## Demo
 Visit [demo.logdy.dev](https://demo.logdy.dev)
@@ -28,26 +30,33 @@ Visit [demo.logdy.dev](https://demo.logdy.dev)
 
 Visit [logdy.dev](http://logdy.dev) for more info.
 
+##### Project status: Beta version, new features added actively.
+
+Logdy is under heavy development and a lot of features is yet to be added. A feedback is welcome from early adopters. Feel free to post [Issues](https://github.com/logdyhq/logdy-core/issues), [Pull Requests](https://github.com/logdyhq/logdy-core/pulls) and contribute in the [Discussions](https://github.com/logdyhq/logdy-core/discussions). Stay tuned for updates, visit [Logdy Blog](https://logdy.dev/blog).
+
 ## Download precompiled binary
 
 Naviage to [releases](https://github.com/logdyhq/logdy-core/releases) Github page and download the latest release for your architecture.
-In addition you can [add the binary to your PATH](https://logdy.dev/docs/how-tos#how-to-add-logdy-to-path) for easier access.
 
-## Quick start
-Below are few examples of what Logdy can do. Whatever the below commands will produce, will be forwarded to a Web UI.
 ```bash
-logdy stdin 'npm run dev'
-logdy stdin 'node index.js'
-logdy stdin 'go run .'
-logdy stdin 'python script.py'
-logdy stdin 'tail -f /var/log/nginx/access.log'
+wget https://github.com/logdyhq/logdy-core/releases/download/v0.5.0/logdy-core_linux_amd64;
+mv logdy-core_linux_amd64 logdu;
+chmod +x logdy;
+```
+In addition you can [add the binary to your PATH](https://logdy.dev/docs/how-tos#how-to-add-logdy-to-path) for easier access.
+## Quick start
+Whatever the below command will produce to the output, will be forwarded to a Web UI.
+```bash
+node index.js | logdy
 ```
 The following should appear
 ```
 INFO[2024-02...] WebUI started, visit http://localhost:8080    port=8080
 ```
-
 Open the URL Address and start building parsers, columns and filters.
+
+There are multiple other ways you can run Logdy, check the [docs](https://logdy.dev/docs/explanation/command-modes).
+
 
 ## Documentation
 
@@ -70,14 +79,16 @@ Available Commands:
   stdin       Listens to STDOUT/STDERR of a provided command. Example `logdy stdin "npm run dev"`
 
 Flags:
-  -t, --fallthrough      When used will fallthrough all of the stdin received to the terminal as is
-  -h, --help             help for logdy
-  -n, --no-analytics     Opt-out from sending anonymous analytical data that helps improve Logdy
-  -u, --no-updates       Opt-out from checking updates on program startup
-  -p, --port string      Port on which the Web UI will be served (default "8080")
-      --ui-pass string   Password that will be used to authenticate in the UI
-  -v, --verbose          Verbose logs
-      --version          version for logdy
+      --bulk-window int   A time window during which log messages are gathered and send in a bulk to a client. Decreasing this window will improve the 'real-time' feeling of messages presented on the screen but could decrease UI performance (default 100)
+      --config string     Path to a file where a config (json) for the UI is located
+  -t, --fallthrough       When used will fallthrough all of the stdin received to the terminal as is
+  -h, --help              help for logdy
+  -n, --no-analytics      Opt-out from sending anonymous analytical data that helps improve Logdy
+  -u, --no-updates        Opt-out from checking updates on program startup
+  -p, --port string       Port on which the Web UI will be served (default "8080")
+      --ui-pass string    Password that will be used to authenticate in the UI
+  -v, --verbose           Verbose logs
+      --version           version for logdy
 ```
 
 ## Development
@@ -114,5 +125,5 @@ gox \
 Once it's ready, publish the binaries in a new Github release. Again, don't forget to update the version.
 
 ```bash
-ghr v0.2.0 bin/
+ghr vx.x.x bin/
 ```
