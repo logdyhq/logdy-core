@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
@@ -11,31 +12,16 @@ func TestClientStartAddToBuffer(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch)
 
-	go c.Start()
-
 	assert.Equal(t, len(c.buffer), 0)
 	ch <- Message{}
 	time.Sleep(1 * time.Millisecond)
 	assert.Equal(t, len(c.buffer), 1)
 }
 
-func TestClientJoinPanic(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		}
-	}()
-	ch := make(chan Message)
-	c := NewClients(ch)
-	c.Join(1)
-	c.Join(1)
-}
-
 func TestClientJoinSingle(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch)
-	go c.Start()
-	client := c.Join(1)
+	client := c.Join(10)
 
 	ch <- Message{Content: "foo"}
 
@@ -48,23 +34,39 @@ func TestClientJoinSingle(t *testing.T) {
 func TestClientJoinSingleAfterMessage(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch)
-	go c.Start()
 	ch <- Message{Content: "foo"}
-	client := c.Join(1)
-
+	client := c.Join(10)
 	msg := <-client.ch
 
 	assert.Equal(t, 1, len(msg))
 	assert.Equal(t, "foo", msg[0].Content)
 }
 
+func TestClientJoinSingleTailLen(t *testing.T) {
+	// tailLen is shorter than num of messages produced
+
+	ch := make(chan Message)
+	c := NewClients(ch)
+
+	for i := 0; i < 20; i++ {
+		ch <- Message{Content: strconv.Itoa(i)}
+	}
+	time.Sleep(1 * time.Millisecond)
+	client := c.Join(10)
+
+	msg := <-client.ch
+
+	assert.Equal(t, 10, len(msg))
+	assert.Equal(t, "10", msg[0].Content)
+	assert.Equal(t, "19", msg[len(msg)-1].Content)
+}
+
 func TestClientJoinMultiple(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch)
-	go c.Start()
-	client1 := c.Join(1)
-	client2 := c.Join(2)
-	client3 := c.Join(3)
+	client1 := c.Join(10)
+	client2 := c.Join(10)
+	client3 := c.Join(10)
 
 	ch <- Message{Content: "foo"}
 
@@ -84,8 +86,7 @@ func TestClientJoinMultiple(t *testing.T) {
 func TestClientBulkWindow(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch)
-	go c.Start()
-	client1 := c.Join(1)
+	client1 := c.Join(10)
 
 	ch <- Message{Content: "foo1"}
 	ch <- Message{Content: "foo2"}
@@ -99,20 +100,171 @@ func TestClientBulkWindow(t *testing.T) {
 	assert.Equal(t, "foo2", messages[1].Content)
 	assert.Equal(t, "foo3", messages[2].Content)
 }
+
 func TestClientSignalQuit(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch)
-	go c.Start()
 
-	c.Join(1)
-	c.Close(1)
+	cl := c.Join(10)
+	c.Close(cl.id)
 }
 
 func TestClientCloseError(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch)
-	go c.Start()
 
-	c.Close(1)
-	c.Close(1)
+	c.Close("1")
+	c.Close("2")
+}
+
+func TestClientStopFollowAndResume(t *testing.T) {
+	ch := make(chan Message)
+	c := NewClients(ch)
+	client := c.Join(0)
+	closed := false
+
+	i := 0
+	go func() {
+		for {
+			i++
+			time.Sleep(1 * time.Millisecond)
+			if closed {
+				return
+			}
+			ch <- Message{Content: strconv.Itoa(i), Id: strconv.Itoa(i)}
+		}
+	}()
+	time.Sleep(10 * time.Millisecond)
+
+	delivered := 0
+
+	lastMsgContent := ""
+	BULK_WINDOW_MS = 1
+
+L:
+	for {
+		select {
+		case msg := <-client.ch:
+			delivered += len(msg)
+			lastMsgContent = msg[len(msg)-1].Content
+			c.PauseFollowing(client.id)
+		default:
+			//once drained, stop listening
+			if delivered > 0 {
+				assert.Less(t, i, delivered+5)
+				// log.Println("Lasg seen", lastMsgContent)
+				break L
+			}
+		}
+	}
+
+	// assert channel is empty bec following is stopped
+	assert.Equal(t, len(client.ch), 0)
+	time.Sleep(10 * time.Millisecond)
+
+	// after some time, assert channel is empty bec following is stopped
+	assert.Equal(t, len(client.ch), 0)
+
+	// resume
+	c.ResumeFollowing(client.id, true)
+	time.Sleep(10 * time.Millisecond)
+	// after some time, assert channel has messages
+	assert.Greater(t, len(client.ch), 0)
+
+	msg := <-client.ch
+	i1, _ := strconv.Atoi(lastMsgContent)
+	i2, _ := strconv.Atoi(msg[0].Content)
+
+	assert.Equal(t, i1+1, i2)
+
+	BULK_WINDOW_MS = 100
+
+	closed = true
+	close(ch)
+}
+
+func TestClientStats(t *testing.T) {
+	ch := make(chan Message)
+	c := NewClients(ch)
+	c.Join(0)
+
+	i := 0
+	st := time.Now()
+	for {
+		if i >= 100 {
+			break
+		}
+		i++
+		ch <- Message{Content: strconv.Itoa(i), Id: strconv.Itoa(i)}
+	}
+	time.Sleep(1 * time.Millisecond)
+	stop := time.Now()
+	time.Sleep(10 * time.Millisecond)
+
+	assert.Equal(t, c.Stats().Count, 100)
+	assert.Less(t, st.UnixMicro(), c.Stats().FirstMessageAt.UnixMicro())
+	assert.GreaterOrEqual(t, stop.UnixMicro(), c.Stats().LastMessageAt.UnixMicro())
+}
+
+func TestClientPeekLog(t *testing.T) {
+	ch := make(chan Message)
+	c := NewClients(ch)
+	c.Join(0)
+
+	i := 0
+	for {
+		if i > 100 {
+			break
+		}
+		i++
+		ch <- Message{Content: strconv.Itoa(i), Id: strconv.Itoa(i)}
+	}
+
+	msgs := c.PeekLog([]int{2, 5, 8, 9999999999}) // 99999 will not be found
+
+	assert.Equal(t, len(msgs), 3)
+	assert.Equal(t, msgs[0].Id, "3")
+	assert.Equal(t, msgs[1].Id, "6")
+	assert.Equal(t, msgs[2].Id, "9")
+}
+
+func TestClientLoad(t *testing.T) {
+	ch := make(chan Message)
+	c := NewClients(ch)
+	client := c.Join(0)
+	closed := false
+
+	i := 0
+	go func() {
+		for {
+			if closed {
+				return
+			}
+			i++
+			time.Sleep(1 * time.Millisecond / 10)
+			ch <- Message{Content: strconv.Itoa(i), Id: strconv.Itoa(i)}
+		}
+	}()
+	time.Sleep(10 * time.Millisecond)
+
+	BULK_WINDOW_MS = 1
+	defer func() {
+		BULK_WINDOW_MS = 100
+		closed = true
+	}()
+
+	c.PauseFollowing(client.id)
+
+	assert.Equal(t, len(client.buffer), 0)
+
+	c.Load(client.id, 10, 25, true)
+	assert.Equal(t, len(client.buffer), 25)
+	assert.Equal(t, client.buffer[0].Id, "10")
+	assert.Equal(t, client.buffer[24].Id, "34")
+
+	c.Load(client.id, 100, 25, false)
+	assert.Equal(t, len(client.buffer), 25)
+	assert.Equal(t, client.buffer[0].Id, "101")
+	assert.Equal(t, client.buffer[24].Id, "125")
+
 }

@@ -59,7 +59,7 @@ func handleStatus(configFilePath string, analyticsEnabled bool, uiPass string) f
 func handleWs(uiPass string, msgs <-chan Message) func(w http.ResponseWriter, r *http.Request) {
 	clients := NewClients(msgs)
 
-	go clients.Start()
+	// go clients.Start()
 
 	wsUpgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -68,7 +68,6 @@ func handleWs(uiPass string, msgs <-chan Message) func(w http.ResponseWriter, r 
 			return true
 		},
 	}
-	cid := 0
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if uiPass != "" {
@@ -92,11 +91,10 @@ func handleWs(uiPass string, msgs <-chan Message) func(w http.ResponseWriter, r 
 
 		logger.Info("New Web UI client connected")
 
-		cid++
-		clientId := cid
-		ch := clients.Join(cid)
+		ch := clients.Join(1000)
+		clientId := ch.id
 
-		go func(clienId int) {
+		go func(clienId string) {
 			for {
 				time.Sleep(1 * time.Second)
 				_, _, err := conn.ReadMessage()
