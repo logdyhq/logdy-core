@@ -10,17 +10,36 @@ import (
 
 func TestClientStartAddToBuffer(t *testing.T) {
 	ch := make(chan Message)
-	c := NewClients(ch)
+	c := NewClients(ch, 1000)
 
-	assert.Equal(t, len(c.buffer), 0)
+	assert.Equal(t, c.ring.Size(), 0)
 	ch <- Message{}
 	time.Sleep(1 * time.Millisecond)
-	assert.Equal(t, len(c.buffer), 1)
+	assert.Equal(t, c.ring.Size(), 1)
+}
+
+func TestClientStartAddToBufferOverSize(t *testing.T) {
+	ch := make(chan Message)
+	c := NewClients(ch, 100)
+
+	assert.Equal(t, c.ring.Size(), 0)
+	for i := 0; i <= 1000; i++ {
+		ch <- Message{Id: strconv.Itoa(i)}
+	}
+	assert.Equal(t, c.ring.Size(), 100)
+
+	msg, err := c.ring.PeekIdx(0)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, msg.Id, "901")
+
+	msg, err = c.ring.PeekIdx(99)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, msg.Id, "1000")
 }
 
 func TestClientJoinSingle(t *testing.T) {
 	ch := make(chan Message)
-	c := NewClients(ch)
+	c := NewClients(ch, 1000)
 	client := c.Join(10)
 
 	ch <- Message{Content: "foo"}
@@ -33,7 +52,7 @@ func TestClientJoinSingle(t *testing.T) {
 
 func TestClientJoinSingleAfterMessage(t *testing.T) {
 	ch := make(chan Message)
-	c := NewClients(ch)
+	c := NewClients(ch, 1000)
 	ch <- Message{Content: "foo"}
 	client := c.Join(10)
 	msg := <-client.ch
@@ -46,7 +65,7 @@ func TestClientJoinSingleTailLen(t *testing.T) {
 	// tailLen is shorter than num of messages produced
 
 	ch := make(chan Message)
-	c := NewClients(ch)
+	c := NewClients(ch, 1000)
 
 	for i := 0; i < 20; i++ {
 		ch <- Message{Content: strconv.Itoa(i)}
@@ -63,7 +82,7 @@ func TestClientJoinSingleTailLen(t *testing.T) {
 
 func TestClientJoinMultiple(t *testing.T) {
 	ch := make(chan Message)
-	c := NewClients(ch)
+	c := NewClients(ch, 1000)
 	client1 := c.Join(10)
 	client2 := c.Join(10)
 	client3 := c.Join(10)
@@ -85,7 +104,7 @@ func TestClientJoinMultiple(t *testing.T) {
 
 func TestClientBulkWindow(t *testing.T) {
 	ch := make(chan Message)
-	c := NewClients(ch)
+	c := NewClients(ch, 1000)
 	client1 := c.Join(10)
 
 	ch <- Message{Content: "foo1"}
@@ -103,7 +122,7 @@ func TestClientBulkWindow(t *testing.T) {
 
 func TestClientSignalQuit(t *testing.T) {
 	ch := make(chan Message)
-	c := NewClients(ch)
+	c := NewClients(ch, 1000)
 
 	cl := c.Join(10)
 	c.Close(cl.id)
@@ -111,7 +130,7 @@ func TestClientSignalQuit(t *testing.T) {
 
 func TestClientCloseError(t *testing.T) {
 	ch := make(chan Message)
-	c := NewClients(ch)
+	c := NewClients(ch, 1000)
 
 	c.Close("1")
 	c.Close("2")
@@ -119,7 +138,7 @@ func TestClientCloseError(t *testing.T) {
 
 func TestClientStopFollowAndResume(t *testing.T) {
 	ch := make(chan Message)
-	c := NewClients(ch)
+	c := NewClients(ch, 1000)
 	client := c.Join(0)
 	closed := false
 
@@ -185,7 +204,7 @@ L:
 
 func TestClientStats(t *testing.T) {
 	ch := make(chan Message)
-	c := NewClients(ch)
+	c := NewClients(ch, 1000)
 	c.Join(0)
 
 	i := 0
@@ -208,7 +227,7 @@ func TestClientStats(t *testing.T) {
 
 func TestClientPeekLog(t *testing.T) {
 	ch := make(chan Message)
-	c := NewClients(ch)
+	c := NewClients(ch, 1000)
 	c.Join(0)
 
 	i := 0
@@ -230,7 +249,7 @@ func TestClientPeekLog(t *testing.T) {
 
 func TestClientLoad(t *testing.T) {
 	ch := make(chan Message)
-	c := NewClients(ch)
+	c := NewClients(ch, 1000)
 	client := c.Join(0)
 	closed := false
 

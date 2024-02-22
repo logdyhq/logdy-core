@@ -1,4 +1,4 @@
-module github.com/logdyhq/logdy-core
+module logdy
 
 go 1.21.4
 

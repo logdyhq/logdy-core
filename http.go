@@ -56,8 +56,8 @@ func handleStatus(configFilePath string, analyticsEnabled bool, uiPass string) f
 	}
 }
 
-func handleWs(uiPass string, msgs <-chan Message) func(w http.ResponseWriter, r *http.Request) {
-	clients := NewClients(msgs)
+func handleWs(uiPass string, msgs <-chan Message, maxMessageCount int64) func(w http.ResponseWriter, r *http.Request) {
+	clients := NewClients(msgs, maxMessageCount)
 
 	// go clients.Start()
 
@@ -147,7 +147,7 @@ func handleWs(uiPass string, msgs <-chan Message) func(w http.ResponseWriter, r 
 	}
 }
 
-func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiPass string, configFilePath string, bulkWindowMs int64) {
+func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiPass string, configFilePath string, bulkWindowMs int64, maxMessageCount int64) {
 	assets, _ := Assets()
 
 	BULK_WINDOW_MS = bulkWindowMs
@@ -160,7 +160,7 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiP
 	http.HandleFunc("/api/status", handleStatus(configFilePath, analyticsEnabled, uiPass))
 
 	// Listen for WebSocket connections on port 8080.
-	http.HandleFunc("/ws", handleWs(uiPass, msgs))
+	http.HandleFunc("/ws", handleWs(uiPass, msgs, maxMessageCount))
 
 	logger.WithFields(logrus.Fields{
 		"port": httpPort,

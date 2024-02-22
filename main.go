@@ -45,6 +45,7 @@ where you can filter and browse well formatted application output.
 		FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		bulkWindow, _ := cmd.Flags().GetInt64("bulk-window")
+		maxMessageCount, _ := cmd.Flags().GetInt64("max-message-count")
 
 		if !noanalytics {
 			logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
@@ -56,7 +57,7 @@ where you can filter and browse well formatted application output.
 			logger.SetLevel(logrus.InfoLevel)
 		}
 
-		handleHttp(ch, httpPort, !noanalytics, uiPass, configFile, bulkWindow)
+		handleHttp(ch, httpPort, !noanalytics, uiPass, configFile, bulkWindow, maxMessageCount)
 	},
 }
 
@@ -156,6 +157,7 @@ func init() {
 }
 
 func main() {
+	logger.Out = os.Stdout
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

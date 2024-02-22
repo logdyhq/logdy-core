@@ -3,11 +3,12 @@ package main
 import (
 	"sync"
 	"time"
+
+	"logdy/ring"
 )
 
 var BULK_WINDOW_MS int64 = 100
 var FLUSH_BUFFER_SIZE = 1000
-var MAX_MESSAGE_COUNT = 100_000
 
 type CursorStatus string
 
@@ -114,18 +115,18 @@ type Clients struct {
 	mu                 sync.Mutex
 	mainChan           <-chan Message
 	clients            map[string]*Client
-	buffer             []Message
+	ring               *ring.RingQueue[Message]
 	currentlyConnected int
 	stats              Stats
 }
 
-func NewClients(msgs <-chan Message) *Clients {
+func NewClients(msgs <-chan Message, maxCount int64) *Clients {
 	cls := &Clients{
 		mu:                 sync.Mutex{},
 		mainChan:           msgs,
 		clients:            map[string]*Client{},
 		currentlyConnected: 0,
-		buffer:             []Message{},
+		ring:               ring.NewRingQueue[Message](maxCount),
 		stats: Stats{
 			Count: 0,
 		},
@@ -146,25 +147,27 @@ func (c *Clients) Load(clientId string, start int, count int, includeStart bool)
 
 	seen := false
 	sent := 0
-	for i, msg := range c.buffer {
+	c.ring.Scan(func(msg Message, i int) bool {
 		if i+1 == start {
 			seen = true
 			if !includeStart {
-				continue
+				return false
 			}
 		}
 
 		if !seen {
-			continue
+			return false
 		}
 
 		sent++
 		cl.handleMessage(msg, true)
 
 		if count > 0 && sent >= count {
-			break
+			return true
 		}
-	}
+		return false
+	})
+
 	cl.flushBuffer()
 
 }
@@ -173,10 +176,14 @@ func (c *Clients) PeekLog(idxs []int) []Message {
 	msgs := []Message{}
 
 	for _, idx := range idxs {
-		if len(c.buffer)-1 < idx {
+		if c.ring.Size()-1 < idx {
 			continue
 		}
-		msgs = append(msgs, c.buffer[idx])
+		msg, err := c.ring.PeekIdx(idx)
+		if err != nil {
+			panic(err)
+		}
+		msgs = append(msgs, msg)
 	}
 
 	return msgs
@@ -198,18 +205,20 @@ func (c *Clients) ResumeFollowing(clientId string, sinceCursor bool) {
 	c.clients[clientId].bufferOpMu.Lock()
 	if sinceCursor {
 		seen := false
-		for _, msg := range c.buffer {
+		c.ring.Scan(func(msg Message, _ int) bool {
 			if msg.Id == c.clients[clientId].cursorPosition {
 				seen = true
-				continue
+				return false
 			}
 
 			if !seen {
-				continue
+				return false
 			}
 
 			c.clients[clientId].handleMessage(msg, true)
-		}
+			return false
+		})
+
 	}
 	c.clients[clientId].flushBuffer()
 	c.clients[clientId].cursorStatus = CURSOR_FOLLOWING
@@ -234,7 +243,8 @@ func (c *Clients) Start() {
 		if c.stats.FirstMessageAt.IsZero() {
 			c.stats.FirstMessageAt = time.Now()
 		}
-		c.buffer = append(c.buffer, msg)
+
+		c.ring.PushSafe(msg)
 		c.stats.Count++
 		c.stats.LastMessageAt = time.Now()
 
@@ -253,11 +263,15 @@ func (c *Clients) Join(tailLen int) *Client {
 
 	// deliver last N messages from a buffer upon connection
 	idx := 0
-	if len(c.buffer) > tailLen {
-		idx = len(c.buffer) - tailLen
+	if c.ring.Size() > tailLen {
+		idx = c.ring.Size() - tailLen
 	}
+	sl, err := c.ring.PeekSlice(idx)
 
-	for _, msg := range c.buffer[idx:] {
+	if err != nil {
+		panic(err)
+	}
+	for _, msg := range sl {
 		cl.handleMessage(msg, true)
 	}
 	c.clients[cl.id].cursorStatus = CURSOR_FOLLOWING

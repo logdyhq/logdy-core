@@ -1,7 +1,7 @@
 package main
 
 import (
-	"os"
+	"io/ioutil"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -10,7 +10,7 @@ var logger *log.Logger
 
 func initLogger() {
 	logger = &log.Logger{
-		Out:   os.Stdout,
+		Out:   ioutil.Discard,
 		Level: log.DebugLevel,
 		Formatter: &log.TextFormatter{
 			DisableColors:   false,
