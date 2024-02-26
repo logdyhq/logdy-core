@@ -137,6 +137,11 @@ func NewClients(msgs <-chan Message, maxCount int64) *Clients {
 	return cls
 }
 
+func (c *Clients) GetClient(clientId string) (*Client, bool) {
+	cl, ok := c.clients[clientId]
+	return cl, ok
+}
+
 func (c *Clients) Load(clientId string, start int, count int, includeStart bool) {
 	c.PauseFollowing(clientId)
 	cl := c.clients[clientId]
@@ -190,9 +195,9 @@ func (c *Clients) PeekLog(idxs []int) []Message {
 }
 
 type Stats struct {
-	Count          int
-	FirstMessageAt time.Time
-	LastMessageAt  time.Time
+	Count          int       `json:"msg_count"`
+	FirstMessageAt time.Time `json:"first_message_at"`
+	LastMessageAt  time.Time `json:"last_message_at"`
 }
 
 func (c *Clients) Stats() Stats {
@@ -256,7 +261,7 @@ func (c *Clients) Start() {
 	}
 }
 
-func (c *Clients) Join(tailLen int) *Client {
+func (c *Clients) Join(tailLen int, shouldFollow bool) *Client {
 	cl := NewClient()
 	c.clients[cl.id] = cl
 	c.currentlyConnected++
@@ -274,7 +279,10 @@ func (c *Clients) Join(tailLen int) *Client {
 	for _, msg := range sl {
 		cl.handleMessage(msg, true)
 	}
-	c.clients[cl.id].cursorStatus = CURSOR_FOLLOWING
+
+	if shouldFollow {
+		c.clients[cl.id].cursorStatus = CURSOR_FOLLOWING
+	}
 
 	return c.clients[cl.id]
 }

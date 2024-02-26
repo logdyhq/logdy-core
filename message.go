@@ -10,6 +10,7 @@ const MessageTypeStderr LogType = 2
 const MessageTypeInit string = "init"
 const MessageTypeLogBulk string = "log_bulk"
 const MessageTypeLogSingle string = "log_sinlge"
+const MessageTypeClientJoined string = "client_joined"
 
 type MessageOrigin struct {
 	Port string `json:"port"`
@@ -30,6 +31,12 @@ type Message struct {
 type MessageBulk struct {
 	BaseMessage
 	Messages []Message `json:"messages"`
+	Status   Stats     `json:"status"`
+}
+
+type ClientJoined struct {
+	BaseMessage
+	ClientId string `json:"client_id"`
 }
 
 type BaseMessage struct {

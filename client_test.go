@@ -40,7 +40,7 @@ func TestClientStartAddToBufferOverSize(t *testing.T) {
 func TestClientJoinSingle(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch, 1000)
-	client := c.Join(10)
+	client := c.Join(10, true)
 
 	ch <- Message{Content: "foo"}
 
@@ -54,7 +54,7 @@ func TestClientJoinSingleAfterMessage(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch, 1000)
 	ch <- Message{Content: "foo"}
-	client := c.Join(10)
+	client := c.Join(10, true)
 	msg := <-client.ch
 
 	assert.Equal(t, 1, len(msg))
@@ -71,7 +71,7 @@ func TestClientJoinSingleTailLen(t *testing.T) {
 		ch <- Message{Content: strconv.Itoa(i)}
 	}
 	time.Sleep(1 * time.Millisecond)
-	client := c.Join(10)
+	client := c.Join(10, true)
 
 	msg := <-client.ch
 
@@ -83,9 +83,9 @@ func TestClientJoinSingleTailLen(t *testing.T) {
 func TestClientJoinMultiple(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch, 1000)
-	client1 := c.Join(10)
-	client2 := c.Join(10)
-	client3 := c.Join(10)
+	client1 := c.Join(10, true)
+	client2 := c.Join(10, true)
+	client3 := c.Join(10, true)
 
 	ch <- Message{Content: "foo"}
 
@@ -105,7 +105,7 @@ func TestClientJoinMultiple(t *testing.T) {
 func TestClientBulkWindow(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch, 1000)
-	client1 := c.Join(10)
+	client1 := c.Join(10, true)
 
 	ch <- Message{Content: "foo1"}
 	ch <- Message{Content: "foo2"}
@@ -124,7 +124,7 @@ func TestClientSignalQuit(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch, 1000)
 
-	cl := c.Join(10)
+	cl := c.Join(10, true)
 	c.Close(cl.id)
 }
 
@@ -139,7 +139,7 @@ func TestClientCloseError(t *testing.T) {
 func TestClientStopFollowAndResume(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch, 1000)
-	client := c.Join(0)
+	client := c.Join(0, true)
 	closed := false
 
 	i := 0
@@ -205,7 +205,7 @@ L:
 func TestClientStats(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch, 1000)
-	c.Join(0)
+	c.Join(0, true)
 
 	i := 0
 	st := time.Now()
@@ -228,7 +228,7 @@ func TestClientStats(t *testing.T) {
 func TestClientPeekLog(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch, 1000)
-	c.Join(0)
+	c.Join(0, true)
 
 	i := 0
 	for {
@@ -250,7 +250,7 @@ func TestClientPeekLog(t *testing.T) {
 func TestClientLoad(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch, 1000)
-	client := c.Join(0)
+	client := c.Join(0, true)
 	closed := false
 
 	i := 0
