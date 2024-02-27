@@ -142,7 +142,7 @@ func (c *Clients) GetClient(clientId string) (*Client, bool) {
 	return cl, ok
 }
 
-func (c *Clients) Load(clientId string, start int, count int, includeStart bool) {
+func (c *Clients) Load(clientId string, startCount int, count int, includeStart bool) {
 	c.PauseFollowing(clientId)
 	cl := c.clients[clientId]
 	cl.waitForBufferDrain()
@@ -153,7 +153,7 @@ func (c *Clients) Load(clientId string, start int, count int, includeStart bool)
 	seen := false
 	sent := 0
 	c.ring.Scan(func(msg Message, i int) bool {
-		if i+1 == start {
+		if i+1 == startCount {
 			seen = true
 			if !includeStart {
 				return false
@@ -166,6 +166,7 @@ func (c *Clients) Load(clientId string, start int, count int, includeStart bool)
 
 		sent++
 		cl.handleMessage(msg, true)
+		cl.cursorPosition = msg.Id
 
 		if count > 0 && sent >= count {
 			return true
@@ -200,8 +201,38 @@ type Stats struct {
 	LastMessageAt  time.Time `json:"last_message_at"`
 }
 
+type ClientStats struct {
+	LastDeliveredId    string `json:"last_delivered_id"`
+	LastDeliveredIdIdx int    `json:"last_delivered_id_idx"`
+	// number of messages the client is behind the tail
+	// by tail we mean a recent message
+	CountToTail int `json:"count_to_tail"`
+}
+
 func (c *Clients) Stats() Stats {
 	return c.stats
+}
+func (c *Clients) ClientStats(clientId string) ClientStats {
+	stats := ClientStats{}
+	cl, exists := c.GetClient(clientId)
+	if !exists {
+		return stats
+	}
+
+	stats.LastDeliveredId = cl.cursorPosition
+
+	c.ring.Scan(func(m Message, idx int) bool {
+		if m.Id == cl.cursorPosition {
+			stats.LastDeliveredIdIdx = idx
+			return true
+		}
+
+		return false
+	})
+
+	stats.CountToTail = c.Stats().Count - stats.LastDeliveredIdIdx
+
+	return stats
 }
 
 func (c *Clients) ResumeFollowing(clientId string, sinceCursor bool) {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -90,7 +91,7 @@ func handleWs(uiPass string, msgs <-chan Message, clients *Clients) func(w http.
 
 		logger.Info("New Web UI client connected")
 
-		ch := clients.Join(1000, true)
+		ch := clients.Join(100, r.URL.Query().Get("should_follow") == "true")
 		clientId := ch.id
 
 		bts, err := json.Marshal(ClientJoined{
@@ -116,11 +117,41 @@ func handleWs(uiPass string, msgs <-chan Message, clients *Clients) func(w http.
 			for {
 				time.Sleep(1 * time.Second)
 				_, _, err := conn.ReadMessage()
+				log.Println("ERROR", err)
 				if err != nil {
 					logger.Debug(err)
 					logger.WithField("client_id", clientId).Info("Closed client")
 					clients.Close(clientId)
 					return
+				}
+			}
+		}(clientId)
+
+		go func(clientId string) {
+			for {
+				time.Sleep(1 * time.Second)
+				if ch.cursorStatus == CURSOR_STOPPED {
+					bts, err = json.Marshal(ClientMsgStatus{
+						BaseMessage: BaseMessage{
+							MessageType: MessageTypeClientMsgStatus,
+						},
+						Client: clients.ClientStats(ch.id),
+						Stats:  clients.Stats(),
+					})
+					if err != nil {
+						fmt.Println("Error while serializing message", err)
+						continue
+					}
+
+					err = conn.WriteMessage(1, bts)
+
+					if err != nil {
+						logger.Error("Err", err)
+						clients.Close(clientId)
+						logger.WithField("client_id", clientId).Info("Closed client")
+						break
+					}
+
 				}
 			}
 		}(clientId)
@@ -148,6 +179,28 @@ func handleWs(uiPass string, msgs <-chan Message, clients *Clients) func(w http.
 			}
 
 			bts, err := json.Marshal(bulk)
+			if err != nil {
+				fmt.Println("Error while serializing message", err)
+				continue
+			}
+
+			err = conn.WriteMessage(1, bts)
+
+			if err != nil {
+				logger.Error("Err", err)
+				clients.Close(clientId)
+				logger.WithField("client_id", clientId).Info("Closed client")
+				break
+			}
+
+			bts, err = json.Marshal(ClientMsgStatus{
+				BaseMessage: BaseMessage{
+					MessageType: MessageTypeClientMsgStatus,
+				},
+				Client: clients.ClientStats(ch.id),
+				Stats:  clients.Stats(),
+			})
+
 			if err != nil {
 				fmt.Println("Error while serializing message", err)
 				continue
@@ -212,7 +265,7 @@ func handleClientStatus(clients *Clients) func(w http.ResponseWriter, r *http.Re
 
 		switch status {
 		case string(CURSOR_FOLLOWING):
-			clients.ResumeFollowing(cl.id, true)
+			clients.ResumeFollowing(cl.id, r.URL.Query().Has("from_cursor"))
 		case string(CURSOR_STOPPED):
 			clients.PauseFollowing(cl.id)
 		default:
@@ -296,7 +349,7 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiP
 
 	http.HandleFunc("/api/check-pass", handleCheckPass(uiPass))
 	http.HandleFunc("/api/status", handleStatus(configFilePath, analyticsEnabled, uiPass))
-	http.HandleFunc("/api/client/status", handleClientStatus(clients))
+	http.HandleFunc("/api/client/set-status", handleClientStatus(clients))
 	http.HandleFunc("/api/client/load", handleClientLoad(clients))
 	http.HandleFunc("/api/client/peek-log", handleClientPeek(clients))
 

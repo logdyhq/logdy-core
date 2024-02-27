@@ -202,7 +202,7 @@ L:
 	close(ch)
 }
 
-func TestClientStats(t *testing.T) {
+func TestClientsStats(t *testing.T) {
 	ch := make(chan Message)
 	c := NewClients(ch, 1000)
 	c.Join(0, true)
@@ -223,6 +223,81 @@ func TestClientStats(t *testing.T) {
 	assert.Equal(t, c.Stats().Count, 100)
 	assert.Less(t, st.UnixMicro(), c.Stats().FirstMessageAt.UnixMicro())
 	assert.GreaterOrEqual(t, stop.UnixMicro(), c.Stats().LastMessageAt.UnixMicro())
+}
+
+func TestClientStats(t *testing.T) {
+	ch := make(chan Message)
+	c := NewClients(ch, 1000)
+	client := c.Join(0, true)
+
+	BULK_WINDOW_MS = 1
+	defer func() {
+		BULK_WINDOW_MS = 100
+	}()
+
+	i := 0
+	for {
+		if i >= 100 {
+			break
+		}
+		i++
+		ch <- Message{Content: strconv.Itoa(i), Id: strconv.Itoa(i)}
+	}
+
+	i2 := 0
+	for {
+		msg := <-client.ch
+		i2 += len(msg)
+
+		if i2 > 80 {
+			c.PauseFollowing(client.id)
+			break
+		}
+	}
+
+	for {
+		if i >= 200 {
+			break
+		}
+		i++
+		ch <- Message{Content: strconv.Itoa(i), Id: strconv.Itoa(i)}
+	}
+	time.Sleep(time.Millisecond)
+	assert.Equal(t, c.Stats().Count, 200)
+
+	stats := c.ClientStats(client.id)
+	assert.Equal(t, stats.LastDeliveredIdIdx+1, i2) //adding 1 to reflect count instead of index which starts at 0
+	assert.Equal(t, stats.CountToTail, 200-i2+1)    // adding 1 to index to reflect count which is returned from stats
+
+}
+
+func TestClientStatsWithLoading(t *testing.T) {
+	ch := make(chan Message)
+	c := NewClients(ch, 1000)
+	client := c.Join(0, false)
+
+	BULK_WINDOW_MS = 1
+	defer func() {
+		BULK_WINDOW_MS = 100
+	}()
+
+	i := 0
+	for {
+		if i >= 100 {
+			break
+		}
+		i++
+		ch <- Message{Content: strconv.Itoa(i), Id: strconv.Itoa(i)}
+	}
+	time.Sleep(time.Millisecond)
+	c.Load(client.id, 20, 20, true) // we're including the first element
+
+	assert.Equal(t, c.Stats().Count, 100)
+
+	stats := c.ClientStats(client.id)
+	assert.Equal(t, stats.LastDeliveredIdIdx, 38) //started at idx 19 inclusive, plus 19 elems is 38
+	assert.Equal(t, stats.CountToTail, 62)        // adding 1 to index to reflect count which is returned from stats
+
 }
 
 func TestClientPeekLog(t *testing.T) {
