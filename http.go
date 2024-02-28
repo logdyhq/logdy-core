@@ -5,17 +5,20 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"logdy/utils"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+
+	"logdy/models"
 )
 
 func handleCheckPass(uiPass string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		logger.Debug("/api/check-pass")
+		utils.Logger.Debug("/api/check-pass")
 		pass := r.URL.Query().Get("password")
 		if uiPass == "" {
 			w.WriteHeader(200)
@@ -23,7 +26,7 @@ func handleCheckPass(uiPass string) func(w http.ResponseWriter, r *http.Request)
 		}
 
 		if pass == "" || uiPass != pass {
-			logger.WithFields(logrus.Fields{
+			utils.Logger.WithFields(logrus.Fields{
 				"ip": r.RemoteAddr,
 				"ua": r.Header.Get("user-agent"),
 			}).Info("Client denied")
@@ -38,17 +41,17 @@ func handleCheckPass(uiPass string) func(w http.ResponseWriter, r *http.Request)
 func handleStatus(configFilePath string, analyticsEnabled bool, uiPass string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		logger.Debug("/api/status")
+		utils.Logger.Debug("/api/status")
 
 		configStr := ""
 		if configFilePath != "" {
-			logger.Debug("Reading config file")
-			configStr = loadFile(configFilePath)
+			utils.Logger.Debug("Reading config file")
+			configStr = utils.LoadFile(configFilePath)
 		}
 
-		initMsg, _ := json.Marshal(InitMessage{
-			BaseMessage: BaseMessage{
-				MessageType: MessageTypeInit,
+		initMsg, _ := json.Marshal(models.InitMessage{
+			BaseMessage: models.BaseMessage{
+				MessageType: models.MessageTypeInit,
 			},
 			AnalyticsEnabled: analyticsEnabled,
 			AuthRequired:     uiPass != "",
@@ -59,7 +62,7 @@ func handleStatus(configFilePath string, analyticsEnabled bool, uiPass string) f
 	}
 }
 
-func handleWs(uiPass string, msgs <-chan Message, clients *Clients) func(w http.ResponseWriter, r *http.Request) {
+func handleWs(uiPass string, msgs <-chan models.Message, clients *Clients) func(w http.ResponseWriter, r *http.Request) {
 
 	wsUpgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -73,7 +76,7 @@ func handleWs(uiPass string, msgs <-chan Message, clients *Clients) func(w http.
 		if uiPass != "" {
 			pass := r.URL.Query().Get("password")
 			if pass == "" || uiPass != pass {
-				logger.WithFields(logrus.Fields{
+				utils.Logger.WithFields(logrus.Fields{
 					"ip": r.RemoteAddr,
 					"ua": r.Header.Get("user-agent"),
 				}).Info("Client denied")
@@ -89,14 +92,14 @@ func handleWs(uiPass string, msgs <-chan Message, clients *Clients) func(w http.
 			return
 		}
 
-		logger.Info("New Web UI client connected")
+		utils.Logger.Info("New Web UI client connected")
 
 		ch := clients.Join(100, r.URL.Query().Get("should_follow") == "true")
 		clientId := ch.id
 
-		bts, err := json.Marshal(ClientJoined{
-			BaseMessage: BaseMessage{
-				MessageType: MessageTypeClientJoined,
+		bts, err := json.Marshal(models.ClientJoined{
+			BaseMessage: models.BaseMessage{
+				MessageType: models.MessageTypeClientJoined,
 			},
 			ClientId: ch.id,
 		})
@@ -119,8 +122,8 @@ func handleWs(uiPass string, msgs <-chan Message, clients *Clients) func(w http.
 				_, _, err := conn.ReadMessage()
 				log.Println("ERROR", err)
 				if err != nil {
-					logger.Debug(err)
-					logger.WithField("client_id", clientId).Info("Closed client")
+					utils.Logger.Debug(err)
+					utils.Logger.WithField("client_id", clientId).Info("Closed client")
 					clients.Close(clientId)
 					return
 				}
@@ -131,9 +134,9 @@ func handleWs(uiPass string, msgs <-chan Message, clients *Clients) func(w http.
 			for {
 				time.Sleep(1 * time.Second)
 				if ch.cursorStatus == CURSOR_STOPPED {
-					bts, err = json.Marshal(ClientMsgStatus{
-						BaseMessage: BaseMessage{
-							MessageType: MessageTypeClientMsgStatus,
+					bts, err = json.Marshal(models.ClientMsgStatus{
+						BaseMessage: models.BaseMessage{
+							MessageType: models.MessageTypeClientMsgStatus,
 						},
 						Client: clients.ClientStats(ch.id),
 						Stats:  clients.Stats(),
@@ -146,9 +149,9 @@ func handleWs(uiPass string, msgs <-chan Message, clients *Clients) func(w http.
 					err = conn.WriteMessage(1, bts)
 
 					if err != nil {
-						logger.Error("Err", err)
+						utils.Logger.Error("Err", err)
 						clients.Close(clientId)
-						logger.WithField("client_id", clientId).Info("Closed client")
+						utils.Logger.WithField("client_id", clientId).Info("Closed client")
 						break
 					}
 
@@ -158,21 +161,21 @@ func handleWs(uiPass string, msgs <-chan Message, clients *Clients) func(w http.
 
 		for {
 			msgs := <-ch.ch
-			bulk := MessageBulk{
-				BaseMessage: BaseMessage{
-					MessageType: MessageTypeLogBulk,
+			bulk := models.MessageBulk{
+				BaseMessage: models.BaseMessage{
+					MessageType: models.MessageTypeLogBulk,
 				},
 				Messages: msgs,
 				Status:   clients.Stats(),
 			}
 
-			logger.WithField("count", len(msgs)).Debug("Received messages")
+			utils.Logger.WithField("count", len(msgs)).Debug("Received messages")
 
-			if logger.Level <= logrus.DebugLevel {
+			if utils.Logger.Level <= logrus.DebugLevel {
 				for _, msg := range msgs {
 					mbts, _ := json.Marshal(msg)
-					logger.WithFields(logrus.Fields{
-						"msg":      trunc(string(mbts), 45),
+					utils.Logger.WithFields(logrus.Fields{
+						"msg":      utils.Trunc(string(mbts), 45),
 						"clientId": clientId,
 					}).Debug("Sending message through WebSocket")
 				}
@@ -187,15 +190,15 @@ func handleWs(uiPass string, msgs <-chan Message, clients *Clients) func(w http.
 			err = conn.WriteMessage(1, bts)
 
 			if err != nil {
-				logger.Error("Err", err)
+				utils.Logger.Error("Err", err)
 				clients.Close(clientId)
-				logger.WithField("client_id", clientId).Info("Closed client")
+				utils.Logger.WithField("client_id", clientId).Info("Closed client")
 				break
 			}
 
-			bts, err = json.Marshal(ClientMsgStatus{
-				BaseMessage: BaseMessage{
-					MessageType: MessageTypeClientMsgStatus,
+			bts, err = json.Marshal(models.ClientMsgStatus{
+				BaseMessage: models.BaseMessage{
+					MessageType: models.MessageTypeClientMsgStatus,
 				},
 				Client: clients.ClientStats(ch.id),
 				Stats:  clients.Stats(),
@@ -209,9 +212,9 @@ func handleWs(uiPass string, msgs <-chan Message, clients *Clients) func(w http.
 			err = conn.WriteMessage(1, bts)
 
 			if err != nil {
-				logger.Error("Err", err)
+				utils.Logger.Error("Err", err)
 				clients.Close(clientId)
-				logger.WithField("client_id", clientId).Info("Closed client")
+				utils.Logger.WithField("client_id", clientId).Info("Closed client")
 				break
 			}
 		}
@@ -238,7 +241,7 @@ func getClientOrErr(r *http.Request, w http.ResponseWriter, clients *Clients) *C
 	cid, err := getClientId(r)
 
 	if err != nil {
-		logger.Error("Missing client id")
+		utils.Logger.Error("Missing client id")
 		w.WriteHeader(http.StatusBadRequest)
 		return nil
 	}
@@ -246,7 +249,7 @@ func getClientOrErr(r *http.Request, w http.ResponseWriter, clients *Clients) *C
 	cl, ok := clients.GetClient(cid)
 
 	if !ok {
-		logger.WithField("client_id", cid).Error("Missing client")
+		utils.Logger.WithField("client_id", cid).Error("Missing client")
 		w.WriteHeader(http.StatusBadRequest)
 		return nil
 	}
@@ -269,7 +272,7 @@ func handleClientStatus(clients *Clients) func(w http.ResponseWriter, r *http.Re
 		case string(CURSOR_STOPPED):
 			clients.PauseFollowing(cl.id)
 		default:
-			logger.Error("Unrecognized status")
+			utils.Logger.Error("Unrecognized status")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -290,13 +293,13 @@ func handleClientLoad(clients *Clients) func(w http.ResponseWriter, r *http.Requ
 
 		startInt, err := strconv.Atoi(start)
 		if err != nil {
-			logger.Error("Invalid start")
+			utils.Logger.Error("Invalid start")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		countInt, err := strconv.Atoi(count)
 		if err != nil {
-			logger.Error("Invalid count")
+			utils.Logger.Error("Invalid count")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -337,7 +340,7 @@ func handleClientPeek(clients *Clients) func(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiPass string, configFilePath string, bulkWindowMs int64, maxMessageCount int64) {
+func handleHttp(msgs <-chan models.Message, httpPort string, analyticsEnabled bool, uiPass string, configFilePath string, bulkWindowMs int64, maxMessageCount int64) {
 	assets, _ := Assets()
 	clients := NewClients(msgs, maxMessageCount)
 
@@ -356,7 +359,7 @@ func handleHttp(msgs <-chan Message, httpPort string, analyticsEnabled bool, uiP
 	// Listen for WebSocket connections on port 8080.
 	http.HandleFunc("/ws", handleWs(uiPass, msgs, clients))
 
-	logger.WithFields(logrus.Fields{
+	utils.Logger.WithFields(logrus.Fields{
 		"port": httpPort,
 	}).Info("WebUI started, visit http://localhost:" + httpPort)
 

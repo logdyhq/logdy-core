@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	. "logdy/models"
+
 	"github.com/stretchr/testify/assert"
 )
 

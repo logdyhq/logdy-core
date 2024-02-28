@@ -4,7 +4,9 @@ import (
 	"sync"
 	"time"
 
+	. "logdy/models"
 	"logdy/ring"
+	"logdy/utils"
 )
 
 var BULK_WINDOW_MS int64 = 100
@@ -28,7 +30,7 @@ type Client struct {
 
 func (c *Client) handleMessage(m Message, force bool) {
 	if !force && c.cursorStatus == CURSOR_STOPPED {
-		logger.Debug("Client: Status stopped discarding message")
+		utils.Logger.Debug("Client: Status stopped discarding message")
 		return
 	}
 	c.buffer = append(c.buffer, m)
@@ -72,7 +74,7 @@ func (c *Client) startBufferFlushLoop() {
 		time.Sleep(time.Millisecond * time.Duration(BULK_WINDOW_MS))
 		select {
 		case <-c.done:
-			logger.Debug("Client: received done signal, quitting")
+			utils.Logger.Debug("Client: received done signal, quitting")
 			defer close(c.done)
 			defer close(c.ch)
 			return
@@ -82,7 +84,7 @@ func (c *Client) startBufferFlushLoop() {
 				continue
 			}
 
-			logger.WithField("count", len(c.buffer)).Debug("Client: Flushing buffer")
+			utils.Logger.WithField("count", len(c.buffer)).Debug("Client: Flushing buffer")
 			c.cursorPosition = c.buffer[len(c.buffer)-1].Id
 			c.bufferOpMu.Lock()
 
@@ -102,7 +104,7 @@ func NewClient() *Client {
 		ch:             make(chan []Message, BULK_WINDOW_MS*25),
 		cursorStatus:   CURSOR_STOPPED,
 		cursorPosition: "",
-		id:             RandStringRunes(6),
+		id:             utils.RandStringRunes(6),
 	}
 
 	go c.startBufferFlushLoop()
@@ -195,20 +197,6 @@ func (c *Clients) PeekLog(idxs []int) []Message {
 	return msgs
 }
 
-type Stats struct {
-	Count          int       `json:"msg_count"`
-	FirstMessageAt time.Time `json:"first_message_at"`
-	LastMessageAt  time.Time `json:"last_message_at"`
-}
-
-type ClientStats struct {
-	LastDeliveredId    string `json:"last_delivered_id"`
-	LastDeliveredIdIdx int    `json:"last_delivered_id_idx"`
-	// number of messages the client is behind the tail
-	// by tail we mean a recent message
-	CountToTail int `json:"count_to_tail"`
-}
-
 func (c *Clients) Stats() Stats {
 	return c.stats
 }
@@ -269,7 +257,7 @@ func (c *Clients) PauseFollowing(clientId string) {
 // starts a delivery channel to all clients
 func (c *Clients) Start() {
 	if c.started {
-		logger.Debug("Clients delivery loop already started")
+		utils.Logger.Debug("Clients delivery loop already started")
 		return
 	}
 

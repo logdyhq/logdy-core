@@ -7,13 +7,18 @@ import (
 	"strconv"
 	"strings"
 
+	"logdy/utils"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"logdy/models"
+	"logdy/modes"
 )
 
-var ch chan Message
+var ch chan models.Message
 
-var Version = "0.5.0"
+var Version = "0.6.0"
 
 var rootCmd = &cobra.Command{
 	Use:     "logdy [command]",
@@ -30,31 +35,31 @@ where you can filter and browse well formatted application output.
 
 		noupdates, _ := cmd.Flags().GetBool("no-updates")
 		if !noupdates {
-			go checkUpdatesAndPrintInfo()
+			go utils.CheckUpdatesAndPrintInfo(Version)
 		}
 
 		if len(args) == 0 {
-			logger.Info("Listen to stdin (from pipe)")
-			go consumeStdin(ch)
+			utils.Logger.Info("Listen to stdin (from pipe)")
+			go modes.ConsumeStdin(ch)
 		}
 
 		httpPort, _ := cmd.Flags().GetString("port")
 		uiPass, _ := cmd.Flags().GetString("ui-pass")
 		configFile, _ := cmd.Flags().GetString("config")
 		noanalytics, _ := cmd.Flags().GetBool("no-analytics")
-		FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
+		modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		bulkWindow, _ := cmd.Flags().GetInt64("bulk-window")
 		maxMessageCount, _ := cmd.Flags().GetInt64("max-message-count")
 
 		if !noanalytics {
-			logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
+			utils.Logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
 		}
 
 		if verbose {
-			logger.SetLevel(logrus.TraceLevel)
+			utils.Logger.SetLevel(logrus.TraceLevel)
 		} else {
-			logger.SetLevel(logrus.InfoLevel)
+			utils.Logger.SetLevel(logrus.InfoLevel)
 		}
 
 		handleHttp(ch, httpPort, !noanalytics, uiPass, configFile, bulkWindow, maxMessageCount)
@@ -68,16 +73,16 @@ var listenStdCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if len(args) == 0 {
-			logger.Info("Listen to stdin (from pipe)")
-			go consumeStdin(ch)
+			utils.Logger.Info("Listen to stdin (from pipe)")
+			go modes.ConsumeStdin(ch)
 			return
 		}
 
-		logger.WithFields(logrus.Fields{
+		utils.Logger.WithFields(logrus.Fields{
 			"cmd": args[0],
 		}).Info("Listen to command stdout")
 		arg := strings.Split(args[0], " ")
-		startCmd(ch, arg[0], arg[1:])
+		modes.StartCmd(ch, arg[0], arg[1:])
 	},
 }
 
@@ -87,7 +92,7 @@ var followCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		followFiles(ch, args)
+		modes.FollowFiles(ch, args)
 	},
 }
 
@@ -99,7 +104,7 @@ var forwardCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ip, _ := cmd.Flags().GetString("ip")
 
-		consumeStdinAndForwardToPort(ip, args[0])
+		modes.ConsumeStdinAndForwardToPort(ip, args[0])
 	},
 }
 
@@ -110,7 +115,7 @@ var listenSocketCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ip, _ := cmd.Flags().GetString("ip")
-		go startSocketServers(ch, ip, args)
+		go modes.StartSocketServers(ch, ip, args)
 	},
 }
 
@@ -129,12 +134,12 @@ var demoSocketCmd = &cobra.Command{
 			}
 		}
 
-		go generateRandomData(produceJson, num, ch, context.Background())
+		go modes.GenerateRandomData(produceJson, num, ch, context.Background())
 	},
 }
 
 func init() {
-	ch = make(chan Message, 1000)
+	ch = make(chan models.Message, 1000)
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
 	rootCmd.PersistentFlags().StringP("ui-pass", "", "", "Password that will be used to authenticate in the UI")
 	rootCmd.PersistentFlags().StringP("config", "", "", "Path to a file where a config (json) for the UI is located")
@@ -147,7 +152,7 @@ func init() {
 	demoSocketCmd.PersistentFlags().BoolP("sample-text", "", true, "By default demo data will produce JSON, use this flag to produce raw text")
 	listenSocketCmd.PersistentFlags().StringP("ip", "", "", "IP address to listen to, leave empty to listen on all IP addresses")
 
-	initLogger()
+	utils.InitLogger()
 
 	rootCmd.AddCommand(listenStdCmd)
 	rootCmd.AddCommand(listenSocketCmd)
@@ -157,10 +162,10 @@ func init() {
 }
 
 func main() {
-	logger.Out = os.Stdout
+	utils.Logger.Out = os.Stdout
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	logger.Debug("Exiting")
+	utils.Logger.Debug("Exiting")
 }

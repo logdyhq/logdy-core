@@ -1,4 +1,6 @@
-https://github.com/sombr/go-container-roundrobin
+Basic implementation comes from https://github.com/sombr/go-container-roundrobin
+However the code has been updated with a couple of useful methods
+---
 MIT License
 
 Copyright (c) 2023 Serge Toro
