@@ -12,7 +12,7 @@
 <a href="https://logdy.dev/blog">Blog</a></strong>
 </p>
 
-### Latest version: 0.5 (19 Feb 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v05#performance-delivering-logs-in-bulks)
+### Latest version: 0.6 (28 Feb 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v06)
 
 Logdy is a single-binary that you add to your PATH so it's available just like any other tool: grep, awk, sed, jq. **No installations, no deployments, no compilations**. It works locally, so it's also secure. [Read more](https://logdy.dev/docs/what-is-logdy).
 
