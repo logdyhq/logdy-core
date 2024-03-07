@@ -40,7 +40,7 @@ Naviage to [releases](https://github.com/logdyhq/logdy-core/releases) Github pag
 
 ```bash
 wget https://github.com/logdyhq/logdy-core/releases/download/v0.5.0/logdy-core_linux_amd64;
-mv logdy-core_linux_amd64 logdu;
+mv logdy-core_linux_amd64 logdy;
 chmod +x logdy;
 ```
 In addition you can [add the binary to your PATH](https://logdy.dev/docs/how-tos#how-to-add-logdy-to-path) for easier access.
