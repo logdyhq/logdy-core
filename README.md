@@ -39,8 +39,8 @@ Logdy is under heavy development and a lot of features is yet to be added. A fee
 Naviage to [releases](https://github.com/logdyhq/logdy-core/releases) Github page and download the latest release for your architecture.
 
 ```bash
-wget https://github.com/logdyhq/logdy-core/releases/download/v0.5.0/logdy-core_linux_amd64;
-mv logdy-core_linux_amd64 logdy;
+wget https://github.com/logdyhq/logdy-core/releases/download/v0.6.0/logdy_linux_amd64;
+mv logdy_linux_amd64 logdy;
 chmod +x logdy;
 ```
 In addition you can [add the binary to your PATH](https://logdy.dev/docs/how-tos#how-to-add-logdy-to-path) for easier access.
