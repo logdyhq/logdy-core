@@ -8,6 +8,7 @@ import (
 	"logdy/utils"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -130,6 +131,8 @@ func handleWs(uiPass string, msgs <-chan models.Message, clients *Clients) func(
 			}
 		}(clientId)
 
+		mtx := sync.Mutex{}
+
 		go func(clientId string) {
 			for {
 				time.Sleep(1 * time.Second)
@@ -146,7 +149,9 @@ func handleWs(uiPass string, msgs <-chan models.Message, clients *Clients) func(
 						continue
 					}
 
+					mtx.Lock()
 					err = conn.WriteMessage(1, bts)
+					mtx.Unlock()
 
 					if err != nil {
 						utils.Logger.Error("Err", err)
@@ -187,6 +192,7 @@ func handleWs(uiPass string, msgs <-chan models.Message, clients *Clients) func(
 				continue
 			}
 
+			mtx.Lock()
 			err = conn.WriteMessage(1, bts)
 
 			if err != nil {
@@ -210,6 +216,7 @@ func handleWs(uiPass string, msgs <-chan models.Message, clients *Clients) func(
 			}
 
 			err = conn.WriteMessage(1, bts)
+			mtx.Unlock()
 
 			if err != nil {
 				utils.Logger.Error("Err", err)

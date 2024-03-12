@@ -18,7 +18,7 @@ import (
 
 var ch chan models.Message
 
-var Version = "0.6.0"
+var Version = "0.0.0"
 
 var rootCmd = &cobra.Command{
 	Use:     "logdy [command]",
@@ -34,7 +34,7 @@ where you can filter and browse well formatted application output.
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 
 		noupdates, _ := cmd.Flags().GetBool("no-updates")
-		if !noupdates {
+		if !noupdates && Version != "0.0.0" {
 			go utils.CheckUpdatesAndPrintInfo(Version)
 		}
 
