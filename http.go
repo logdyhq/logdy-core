@@ -347,7 +347,7 @@ func handleClientPeek(clients *Clients) func(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func handleHttp(msgs <-chan models.Message, httpPort string, analyticsEnabled bool, uiPass string, configFilePath string, bulkWindowMs int64, maxMessageCount int64) {
+func handleHttp(msgs <-chan models.Message, httpPort string, uiIp string, analyticsEnabled bool, uiPass string, configFilePath string, bulkWindowMs int64, maxMessageCount int64) {
 	assets, _ := Assets()
 	clients := NewClients(msgs, maxMessageCount)
 
@@ -368,7 +368,11 @@ func handleHttp(msgs <-chan models.Message, httpPort string, analyticsEnabled bo
 
 	utils.Logger.WithFields(logrus.Fields{
 		"port": httpPort,
-	}).Info("WebUI started, visit http://localhost:" + httpPort)
+	}).Info("WebUI started, visit http://" + uiIp + ":" + httpPort)
 
-	http.ListenAndServe(":"+httpPort, nil)
+	err := http.ListenAndServe(uiIp+":"+httpPort, nil)
+
+	if err != nil {
+		panic(err)
+	}
 }

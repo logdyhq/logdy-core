@@ -44,6 +44,7 @@ where you can filter and browse well formatted application output.
 		}
 
 		httpPort, _ := cmd.Flags().GetString("port")
+		uiIp, _ := cmd.Flags().GetString("ui-ip")
 		uiPass, _ := cmd.Flags().GetString("ui-pass")
 		configFile, _ := cmd.Flags().GetString("config")
 		noanalytics, _ := cmd.Flags().GetBool("no-analytics")
@@ -62,7 +63,7 @@ where you can filter and browse well formatted application output.
 			utils.Logger.SetLevel(logrus.InfoLevel)
 		}
 
-		handleHttp(ch, httpPort, !noanalytics, uiPass, configFile, bulkWindow, maxMessageCount)
+		handleHttp(ch, httpPort, uiIp, !noanalytics, uiPass, configFile, bulkWindow, maxMessageCount)
 	},
 }
 
@@ -141,6 +142,7 @@ var demoSocketCmd = &cobra.Command{
 func init() {
 	ch = make(chan models.Message, 1000)
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
+	rootCmd.PersistentFlags().StringP("ui-ip", "", "127.0.0.1", "Bind Web UI server to a specific IP address")
 	rootCmd.PersistentFlags().StringP("ui-pass", "", "", "Password that will be used to authenticate in the UI")
 	rootCmd.PersistentFlags().StringP("config", "", "", "Path to a file where a config (json) for the UI is located")
 	rootCmd.PersistentFlags().Int64P("bulk-window", "", 100, "A time window during which log messages are gathered and send in a bulk to a client. Decreasing this window will improve the 'real-time' feeling of messages presented on the screen but could decrease UI performance")
