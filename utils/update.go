@@ -86,7 +86,7 @@ func CheckUpdatesAndPrintInfo(version string) {
 	Logger.Info(Yellow + "> Version: " + update.CurrentVersion)
 	Logger.Info(Yellow + "> Date published: " + update.CurrentVersionPublished)
 	Logger.Info(Yellow + "> Download: " + update.DownloadLink)
-	Logger.Info(Yellow + "> Blog: " + update.DownloadLink)
+	Logger.Info(Yellow + "> Blog: " + update.BlogLink)
 
 	if update.Excerpt != "" {
 		Logger.Info(Yellow + "> " + update.Excerpt)
