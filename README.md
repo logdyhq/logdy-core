@@ -12,7 +12,7 @@
 <a href="https://logdy.dev/blog">Blog</a></strong>
 </p>
 
-### Latest version: 0.6 (28 Feb 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v06)
+### Latest version: 0.7 (12 Mar 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v07)
 
 Logdy is a single-binary that you add to your PATH so it's available just like any other tool: grep, awk, sed, jq. **No installations, no deployments, no compilations**. It works locally, so it's also secure. [Read more](https://logdy.dev/docs/what-is-logdy).
 
@@ -79,16 +79,18 @@ Available Commands:
   stdin       Listens to STDOUT/STDERR of a provided command. Example `logdy stdin "npm run dev"`
 
 Flags:
-      --bulk-window int   A time window during which log messages are gathered and send in a bulk to a client. Decreasing this window will improve the 'real-time' feeling of messages presented on the screen but could decrease UI performance (default 100)
-      --config string     Path to a file where a config (json) for the UI is located
-  -t, --fallthrough       When used will fallthrough all of the stdin received to the terminal as is
-  -h, --help              help for logdy
-  -n, --no-analytics      Opt-out from sending anonymous analytical data that helps improve Logdy
-  -u, --no-updates        Opt-out from checking updates on program startup
-  -p, --port string       Port on which the Web UI will be served (default "8080")
-      --ui-pass string    Password that will be used to authenticate in the UI
-  -v, --verbose           Verbose logs
-      --version           version for logdy
+      --bulk-window int         A time window during which log messages are gathered and send in a bulk to a client. Decreasing this window will improve the 'real-time' feeling of messages presented on the screen but could decrease UI performance (default 100)
+      --config string           Path to a file where a config (json) for the UI is located
+  -t, --fallthrough             When used will fallthrough all of the stdin received to the terminal as is
+  -h, --help                    help for logdy
+      --max-message-count int   Max number of messages that will be stored in a buffer for further retrieval. On buffer overflow, oldest messages will be removed. (default 100000)
+  -n, --no-analytics            Opt-out from sending anonymous analytical data that helps improve Logdy
+  -u, --no-updates              Opt-out from checking updates on program startup
+  -p, --port string             Port on which the Web UI will be served (default "8080")
+      --ui-ip string            Bind Web UI server to a specific IP address (default "127.0.0.1")
+      --ui-pass string          Password that will be used to authenticate in the UI
+  -v, --verbose                 Verbose logs
+      --version                 version for logdy
 ```
 
 ## Development
