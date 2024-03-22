@@ -63,7 +63,7 @@ func handleStatus(configFilePath string, analyticsEnabled bool, uiPass string) f
 	}
 }
 
-func handleWs(uiPass string, msgs <-chan models.Message, clients *Clients) func(w http.ResponseWriter, r *http.Request) {
+func handleWs(uiPass string, clients *Clients) func(w http.ResponseWriter, r *http.Request) {
 
 	wsUpgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -364,7 +364,7 @@ func handleHttp(msgs <-chan models.Message, httpPort string, uiIp string, analyt
 	http.HandleFunc("/api/client/peek-log", handleClientPeek(clients))
 
 	// Listen for WebSocket connections on port 8080.
-	http.HandleFunc("/ws", handleWs(uiPass, msgs, clients))
+	http.HandleFunc("/ws", handleWs(uiPass, clients))
 
 	utils.Logger.WithFields(logrus.Fields{
 		"port": httpPort,

@@ -47,6 +47,8 @@ where you can filter and browse well formatted application output.
 		uiIp, _ := cmd.Flags().GetString("ui-ip")
 		uiPass, _ := cmd.Flags().GetString("ui-pass")
 		configFile, _ := cmd.Flags().GetString("config")
+		appendToFile, _ := cmd.Flags().GetString("append-to-file")
+		appendToFileRaw, _ := cmd.Flags().GetBool("append-to-file-raw")
 		noanalytics, _ := cmd.Flags().GetBool("no-analytics")
 		modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 		verbose, _ := cmd.Flags().GetBool("verbose")
@@ -63,7 +65,8 @@ where you can filter and browse well formatted application output.
 			utils.Logger.SetLevel(logrus.InfoLevel)
 		}
 
-		handleHttp(ch, httpPort, uiIp, !noanalytics, uiPass, configFile, bulkWindow, maxMessageCount)
+		mainChan := utils.ProcessIncomingMessages(ch, appendToFile, appendToFileRaw)
+		handleHttp(mainChan, httpPort, uiIp, !noanalytics, uiPass, configFile, bulkWindow, maxMessageCount)
 	},
 }
 
@@ -145,9 +148,11 @@ func init() {
 	rootCmd.PersistentFlags().StringP("ui-ip", "", "127.0.0.1", "Bind Web UI server to a specific IP address")
 	rootCmd.PersistentFlags().StringP("ui-pass", "", "", "Password that will be used to authenticate in the UI")
 	rootCmd.PersistentFlags().StringP("config", "", "", "Path to a file where a config (json) for the UI is located")
+	rootCmd.PersistentFlags().StringP("append-to-file", "", "", "Path to a file where message logs will be appended, the file will be created if it doesn't exist")
 	rootCmd.PersistentFlags().Int64P("bulk-window", "", 100, "A time window during which log messages are gathered and send in a bulk to a client. Decreasing this window will improve the 'real-time' feeling of messages presented on the screen but could decrease UI performance")
 	rootCmd.PersistentFlags().Int64P("max-message-count", "", 100_000, "Max number of messages that will be stored in a buffer for further retrieval. On buffer overflow, oldest messages will be removed.")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose logs")
+	rootCmd.PersistentFlags().BoolP("append-to-file-raw", "", false, "When 'append-to-file' is set, raw lines without metadata will be saved to a file")
 	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that helps improve Logdy")
 	rootCmd.PersistentFlags().BoolP("no-updates", "u", false, "Opt-out from checking updates on program startup")
 	rootCmd.PersistentFlags().BoolP("fallthrough", "t", false, "When used will fallthrough all of the stdin received to the terminal as is")
