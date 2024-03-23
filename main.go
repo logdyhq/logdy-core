@@ -155,7 +155,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("append-to-file-raw", "", false, "When 'append-to-file' is set, raw lines without metadata will be saved to a file")
 	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that helps improve Logdy")
 	rootCmd.PersistentFlags().BoolP("no-updates", "u", false, "Opt-out from checking updates on program startup")
-	rootCmd.PersistentFlags().BoolP("fallthrough", "t", false, "When used will fallthrough all of the stdin received to the terminal as is")
+	rootCmd.PersistentFlags().BoolP("fallthrough", "t", false, "Will fallthrough all of the stdin received to the terminal as is (will display incoming messages)")
 	demoSocketCmd.PersistentFlags().BoolP("sample-text", "", true, "By default demo data will produce JSON, use this flag to produce raw text")
 	listenSocketCmd.PersistentFlags().StringP("ip", "", "", "IP address to listen to, leave empty to listen on all IP addresses")
 

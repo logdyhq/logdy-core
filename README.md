@@ -79,6 +79,8 @@ Available Commands:
   stdin       Listens to STDOUT/STDERR of a provided command. Example `logdy stdin "npm run dev"`
 
 Flags:
+      --append-to-file string   Path to a file where message logs will be appended, the file will be created if it doesn't exist
+      --append-to-file-raw      When 'append-to-file' is set, raw lines without metadata will be saved to a file
       --bulk-window int         A time window during which log messages are gathered and send in a bulk to a client. Decreasing this window will improve the 'real-time' feeling of messages presented on the screen but could decrease UI performance (default 100)
       --config string           Path to a file where a config (json) for the UI is located
   -t, --fallthrough             When used will fallthrough all of the stdin received to the terminal as is
@@ -106,7 +108,7 @@ If you would like to develop with UI, check [readme for logdy-ui](https://github
 
 ## Building
 
-This repository uses static asset embedding during compilation. This way, the UI is served from a single binary. Before you build make sure you copy a compiled [UI](https://github.com/logdyhq/logdy-ui) (follow the instructions about building) in `assets` directory.
+This repository uses static asset embedding during compilation. This way, the UI is served from a single binary. Before you build make sure you copy a compiled [UI](https://github.com/logdyhq/logdy-ui) (follow the instructions about building) in `assets` directory. The UI is already commited to this repository, so you don't have to do anymore actions.
 
 Look at `embed.go` for more details on how UI is embedded into the binary.
 
