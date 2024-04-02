@@ -3,6 +3,7 @@ package modes
 import (
 	"context"
 	"encoding/json"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -33,7 +34,20 @@ func GenerateRandomData(jsonFormat bool, numPerSec int, ch chan Message, ctx con
 		} else {
 			msg = generateTextRandomData()
 		}
-		produce(ch, msg, MessageTypeStdout, nil)
+
+		mo := MessageOrigin{}
+
+		if rand.Intn(100) >= 50 {
+			mo.File = []string{"foo1.log", "foo2.log", "foo3.log"}[rand.Intn(3)]
+		} else {
+			mo.Port = []string{"4356", "4333", "4262"}[rand.Intn(3)]
+		}
+		if rand.Intn(100) >= 90 {
+			mo.File = ""
+			mo.Port = ""
+		}
+
+		produce(ch, msg, MessageTypeStdout, &mo)
 		time.Sleep(time.Duration((1 / float64(numPerSec)) * float64(time.Second)))
 	}
 
