@@ -130,7 +130,8 @@ func NewClients(msgs <-chan Message, maxCount int64) *Clients {
 		currentlyConnected: 0,
 		ring:               ring.NewRingQueue[Message](maxCount),
 		stats: Stats{
-			Count: 0,
+			MaxCount: maxCount,
+			Count:    0,
 		},
 	}
 
@@ -269,7 +270,10 @@ func (c *Clients) Start() {
 		}
 
 		c.ring.PushSafe(msg)
-		c.stats.Count++
+		if c.stats.Count < int(c.stats.MaxCount) {
+			c.stats.Count++
+		}
+
 		c.stats.LastMessageAt = time.Now()
 
 		for _, ch := range c.clients {

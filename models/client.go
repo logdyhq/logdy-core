@@ -3,6 +3,7 @@ package models
 import "time"
 
 type Stats struct {
+	MaxCount       int64     `json:"max_count"`
 	Count          int       `json:"msg_count"`
 	FirstMessageAt time.Time `json:"first_message_at"`
 	LastMessageAt  time.Time `json:"last_message_at"`

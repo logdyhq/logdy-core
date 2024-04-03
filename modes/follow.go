@@ -22,11 +22,10 @@ func FollowFiles(ch chan models.Message, files []string) {
 				"error": err.Error(),
 			}).Error("Following file changes failed")
 			continue
-		} else {
-			utils.Logger.WithFields(logrus.Fields{
-				"path": file,
-			}).Info("Following file changes")
 		}
+		utils.Logger.WithFields(logrus.Fields{
+			"path": file,
+		}).Info("Following file changes")
 
 		go func(file string) {
 			t, err := tail.TailFile(
@@ -45,4 +44,30 @@ func FollowFiles(ch chan models.Message, files []string) {
 		}(file)
 	}
 
+}
+
+func ReadFiles(ch chan models.Message, files []string) {
+	for _, file := range files {
+
+		_, err := os.Stat(file)
+		if err != nil {
+			utils.Logger.WithFields(logrus.Fields{
+				"path":  file,
+				"error": err.Error(),
+			}).Error("Reading file failed")
+			continue
+		}
+
+		r, size, bar := utils.OpenFileForReading(file)
+		utils.Logger.WithFields(logrus.Fields{
+			"path":       file,
+			"size_bytes": size,
+		}).Info("Reading file")
+
+		utils.LineCounterWithChannel(r, func(line utils.Line, cancel func()) {
+			produce(ch, string(line.Line), models.MessageTypeStdout, &models.MessageOrigin{File: file})
+		})
+		bar.Finish()
+
+	}
 }

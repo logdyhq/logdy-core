@@ -31,6 +31,14 @@ where you can filter and browse well formatted application output.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 	},
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		verbose, _ := cmd.Flags().GetBool("verbose")
+		if verbose {
+			utils.Logger.SetLevel(logrus.TraceLevel)
+		} else {
+			utils.Logger.SetLevel(logrus.InfoLevel)
+		}
+	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 
 		noupdates, _ := cmd.Flags().GetBool("no-updates")
@@ -47,27 +55,28 @@ where you can filter and browse well formatted application output.
 		uiIp, _ := cmd.Flags().GetString("ui-ip")
 		uiPass, _ := cmd.Flags().GetString("ui-pass")
 		configFile, _ := cmd.Flags().GetString("config")
-		appendToFile, _ := cmd.Flags().GetString("append-to-file")
-		appendToFileRaw, _ := cmd.Flags().GetBool("append-to-file-raw")
 		noanalytics, _ := cmd.Flags().GetBool("no-analytics")
-		modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
-		verbose, _ := cmd.Flags().GetBool("verbose")
 		bulkWindow, _ := cmd.Flags().GetInt64("bulk-window")
-		maxMessageCount, _ := cmd.Flags().GetInt64("max-message-count")
+		modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 
 		if !noanalytics {
 			utils.Logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
 		}
 
-		if verbose {
-			utils.Logger.SetLevel(logrus.TraceLevel)
-		} else {
-			utils.Logger.SetLevel(logrus.InfoLevel)
+		if clients == nil {
+			InitializeClients(cmd)
 		}
 
-		mainChan := utils.ProcessIncomingMessages(ch, appendToFile, appendToFileRaw)
-		handleHttp(mainChan, httpPort, uiIp, !noanalytics, uiPass, configFile, bulkWindow, maxMessageCount)
+		handleHttp(httpPort, uiIp, !noanalytics, uiPass, configFile, bulkWindow)
 	},
+}
+
+func InitializeClients(cmd *cobra.Command) {
+	appendToFile, _ := cmd.Flags().GetString("append-to-file")
+	appendToFileRaw, _ := cmd.Flags().GetBool("append-to-file-raw")
+	maxMessageCount, _ := cmd.Flags().GetInt64("max-message-count")
+	mainChan := utils.ProcessIncomingMessages(ch, appendToFile, appendToFileRaw)
+	clients = NewClients(mainChan, maxMessageCount)
 }
 
 var listenStdCmd = &cobra.Command{
@@ -96,6 +105,13 @@ var followCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		InitializeClients(cmd)
+		fullRead, _ := cmd.Flags().GetBool("full-read")
+
+		if fullRead {
+			modes.ReadFiles(ch, args)
+		}
+
 		modes.FollowFiles(ch, args)
 	},
 }
@@ -156,15 +172,20 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that helps improve Logdy")
 	rootCmd.PersistentFlags().BoolP("no-updates", "u", false, "Opt-out from checking updates on program startup")
 	rootCmd.PersistentFlags().BoolP("fallthrough", "t", false, "Will fallthrough all of the stdin received to the terminal as is (will display incoming messages)")
-	demoSocketCmd.PersistentFlags().BoolP("sample-text", "", true, "By default demo data will produce JSON, use this flag to produce raw text")
-	listenSocketCmd.PersistentFlags().StringP("ip", "", "", "IP address to listen to, leave empty to listen on all IP addresses")
 
 	utils.InitLogger()
 
 	rootCmd.AddCommand(listenStdCmd)
+
+	listenSocketCmd.PersistentFlags().StringP("ip", "", "", "IP address to listen to, leave empty to listen on all IP addresses")
 	rootCmd.AddCommand(listenSocketCmd)
+
 	rootCmd.AddCommand(forwardCmd)
+
+	demoSocketCmd.PersistentFlags().BoolP("sample-text", "", true, "By default demo data will produce JSON, use this flag to produce raw text")
 	rootCmd.AddCommand(demoSocketCmd)
+
+	followCmd.Flags().BoolP("full-read", "", false, "Whether the the file(s) should be read entirely")
 	rootCmd.AddCommand(followCmd)
 }
 
