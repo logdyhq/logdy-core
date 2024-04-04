@@ -15,7 +15,7 @@ func init() {
 func InitLogger() {
 	Logger = &log.Logger{
 		Out:   ioutil.Discard,
-		Level: log.DebugLevel,
+		Level: log.InfoLevel,
 		Formatter: &log.TextFormatter{
 			DisableColors:   false,
 			FullTimestamp:   true,

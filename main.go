@@ -35,6 +35,7 @@ where you can filter and browse well formatted application output.
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		if verbose {
 			utils.Logger.SetLevel(logrus.TraceLevel)
+			utils.Logger.Debug("Setting verbose logger")
 		} else {
 			utils.Logger.SetLevel(logrus.InfoLevel)
 		}
