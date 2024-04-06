@@ -9,10 +9,20 @@ import (
 
 	"github.com/brianvoe/gofakeit/v6"
 
-	. "logdy/models"
+	"logdy/models"
+	"logdy/utils"
 )
 
-func GenerateRandomData(jsonFormat bool, numPerSec int, ch chan Message, ctx context.Context) {
+var correlationIds []string
+
+func generateCorrelationIds() {
+	correlationIds = []string{""}
+	for i := 0; i <= 4; i++ {
+		correlationIds = append(correlationIds, utils.RandStringRunes(8))
+	}
+}
+
+func GenerateRandomData(jsonFormat bool, numPerSec int, ch chan models.Message, ctx context.Context) {
 
 	if numPerSec > 100 {
 		numPerSec = 100
@@ -22,7 +32,14 @@ func GenerateRandomData(jsonFormat bool, numPerSec int, ch chan Message, ctx con
 		return // produce no data, so just leave
 	}
 
+	i := 0
+	generateCorrelationIds()
 	for {
+		i++
+
+		if i%60 == 0 {
+			generateCorrelationIds()
+		}
 
 		if ctx.Err() != nil {
 			return
@@ -35,19 +52,19 @@ func GenerateRandomData(jsonFormat bool, numPerSec int, ch chan Message, ctx con
 			msg = generateTextRandomData()
 		}
 
-		mo := MessageOrigin{}
+		mo := models.MessageOrigin{}
 
 		if rand.Intn(100) >= 50 {
-			mo.File = []string{"foo1.log", "foo2.log", "foo3.log"}[rand.Intn(3)]
+			mo.File = utils.PickRandom[string]([]string{"foo1.log", "foo2.log", "foo3.log"})
 		} else {
-			mo.Port = []string{"4356", "4333", "4262"}[rand.Intn(3)]
+			mo.Port = utils.PickRandom[string]([]string{"4356", "4333", "4262"})
 		}
 		if rand.Intn(100) >= 90 {
 			mo.File = ""
 			mo.Port = ""
 		}
 
-		produce(ch, msg, MessageTypeStdout, &mo)
+		produce(ch, msg, models.MessageTypeStdout, &mo)
 		time.Sleep(time.Duration((1 / float64(numPerSec)) * float64(time.Second)))
 	}
 
@@ -63,19 +80,21 @@ func generateTextRandomData() string {
 		gofakeit.LogLevel("log"),
 		gofakeit.UserAgent(),
 		gofakeit.HTTPMethod(),
+		utils.PickRandom[string](correlationIds),
 	}, " | ")
 }
 
 func generateJsonRandomData() string {
 	val, _ := json.Marshal(map[string]string{
-		"ts":     time.Now().Format("15:04:05.0000"),
-		"uuid":   gofakeit.UUID(),
-		"domain": gofakeit.DomainName(),
-		"ipv4":   gofakeit.IPv4Address(),
-		"url":    gofakeit.URL(),
-		"level":  gofakeit.LogLevel("log"),
-		"ua":     gofakeit.UserAgent(),
-		"method": gofakeit.HTTPMethod(),
+		"ts":             time.Now().Format("15:04:05.0000"),
+		"uuid":           gofakeit.UUID(),
+		"domain":         gofakeit.DomainName(),
+		"ipv4":           gofakeit.IPv4Address(),
+		"url":            gofakeit.URL(),
+		"level":          gofakeit.LogLevel("log"),
+		"ua":             gofakeit.UserAgent(),
+		"method":         gofakeit.HTTPMethod(),
+		"correlation_id": utils.PickRandom[string](correlationIds),
 	})
 
 	return string(val)

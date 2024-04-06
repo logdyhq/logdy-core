@@ -47,3 +47,11 @@ func Trunc(str string, limit int) string {
 
 	return str[:limit] + "..."
 }
+
+func PickRandom[T any](slice []T) T {
+	if len(slice) == 0 {
+		panic("slice is empty")
+	}
+	index := rand.Intn(len(slice))
+	return slice[index]
+}
