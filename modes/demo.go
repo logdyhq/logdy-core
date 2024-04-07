@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -37,7 +38,7 @@ func GenerateRandomData(jsonFormat bool, numPerSec int, ch chan models.Message, 
 	for {
 		i++
 
-		if i%60 == 0 {
+		if i%(60*numPerSec) == 0 {
 			generateCorrelationIds()
 		}
 
@@ -73,6 +74,8 @@ func GenerateRandomData(jsonFormat bool, numPerSec int, ch chan models.Message, 
 func generateTextRandomData() string {
 	return strings.Join([]string{
 		time.Now().Format("15:04:05.0000"),
+		strconv.Itoa(int(time.Now().UnixMilli())),
+		strconv.Itoa(rand.Intn(100)),
 		gofakeit.UUID(),
 		gofakeit.DomainName(),
 		gofakeit.IPv4Address(),
@@ -87,6 +90,8 @@ func generateTextRandomData() string {
 func generateJsonRandomData() string {
 	val, _ := json.Marshal(map[string]string{
 		"ts":             time.Now().Format("15:04:05.0000"),
+		"unix":           strconv.Itoa(int(time.Now().UnixMilli())),
+		"duration":       strconv.Itoa(rand.Intn(100)),
 		"uuid":           gofakeit.UUID(),
 		"domain":         gofakeit.DomainName(),
 		"ipv4":           gofakeit.IPv4Address(),
