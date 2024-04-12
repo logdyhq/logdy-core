@@ -34,6 +34,20 @@ Visit [logdy.dev](http://logdy.dev) for more info.
 
 Logdy is under heavy development and a lot of features is yet to be added. A feedback is welcome from early adopters. Feel free to post [Issues](https://github.com/logdyhq/logdy-core/issues), [Pull Requests](https://github.com/logdyhq/logdy-core/pulls) and contribute in the [Discussions](https://github.com/logdyhq/logdy-core/discussions). Stay tuned for updates, visit [Logdy Blog](https://logdy.dev/blog).
 
+## Install using script
+The command below will download the latest release and add the executable to your system's PATH. You can also use it to update Logdy.
+
+```bash
+$ curl https://logdy.dev/install.sh | sh
+```
+
+## Install with Homebrew (MacOS)
+On MacOS you can use homebrew to install Logdy.
+
+```bash
+$ brew install logdy
+```
+
 ## Download precompiled binary
 
 Naviage to [releases](https://github.com/logdyhq/logdy-core/releases) Github page and download the latest release for your architecture.
