@@ -75,7 +75,7 @@ func generateTextRandomData() string {
 	return strings.Join([]string{
 		time.Now().Format("15:04:05.0000"),
 		strconv.Itoa(int(time.Now().UnixMilli())),
-		strconv.Itoa(rand.Intn(100)),
+		strconv.Itoa(rand.Intn(500-300) + 300),
 		gofakeit.UUID(),
 		gofakeit.DomainName(),
 		gofakeit.IPv4Address(),
@@ -91,7 +91,7 @@ func generateJsonRandomData() string {
 	val, _ := json.Marshal(map[string]string{
 		"ts":             time.Now().Format("15:04:05.0000"),
 		"unix":           strconv.Itoa(int(time.Now().UnixMilli())),
-		"duration":       strconv.Itoa(rand.Intn(100)),
+		"duration":       strconv.Itoa(rand.Intn(500-300) + 300),
 		"uuid":           gofakeit.UUID(),
 		"domain":         gofakeit.DomainName(),
 		"ipv4":           gofakeit.IPv4Address(),
