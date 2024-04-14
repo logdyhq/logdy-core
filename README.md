@@ -12,7 +12,7 @@
 <a href="https://logdy.dev/blog">Blog</a></strong>
 </p>
 
-### Latest version: 0.9 (04 April 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v09)
+### Latest version: 0.10 (14 April 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v10)
 
 Logdy is a single-binary that you add to your PATH so it's available just like any other tool: grep, awk, sed, jq. **No installations, no deployments, no compilations**. It works locally, so it's also secure. [Read more](https://logdy.dev/docs/what-is-logdy).
 
@@ -53,7 +53,7 @@ $ brew install logdy
 Naviage to [releases](https://github.com/logdyhq/logdy-core/releases) Github page and download the latest release for your architecture.
 
 ```bash
-wget https://github.com/logdyhq/logdy-core/releases/download/v0.6.0/logdy_linux_amd64;
+wget https://github.com/logdyhq/logdy-core/releases/download/v0.10.0/logdy_linux_amd64;
 mv logdy_linux_amd64 logdy;
 chmod +x logdy;
 ```
