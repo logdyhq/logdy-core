@@ -16,6 +16,10 @@ import (
 
 var correlationIds []string
 
+func init() {
+	generateCorrelationIds()
+}
+
 func generateCorrelationIds() {
 	correlationIds = []string{""}
 	for i := 0; i <= 4; i++ {
@@ -34,7 +38,6 @@ func GenerateRandomData(jsonFormat bool, numPerSec int, ch chan models.Message, 
 	}
 
 	i := 0
-	generateCorrelationIds()
 	for {
 		i++
 
