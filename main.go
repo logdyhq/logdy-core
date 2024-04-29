@@ -41,6 +41,11 @@ where you can filter and browse well formatted application output.
 		}
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		if strings.HasPrefix(cmd.CommandPath(), "logdy completion") {
+			// if logdy completion command is run, dont start websever, just
+			// exit the process
+			os.Exit(0)
+		}
 
 		noupdates, _ := cmd.Flags().GetBool("no-updates")
 		if !noupdates && Version != "0.0.0" {
