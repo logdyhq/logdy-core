@@ -64,6 +64,7 @@ where you can filter and browse well formatted application output.
 		noanalytics, _ := cmd.Flags().GetBool("no-analytics")
 		bulkWindow, _ := cmd.Flags().GetInt64("bulk-window")
 		modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
+		modes.DisableANSICodeStripping, _ = cmd.Flags().GetBool("disable-ansi-code-stripping")
 
 		if !noanalytics {
 			utils.Logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
@@ -174,6 +175,7 @@ func init() {
 	rootCmd.PersistentFlags().Int64P("bulk-window", "", 100, "A time window during which log messages are gathered and send in a bulk to a client. Decreasing this window will improve the 'real-time' feeling of messages presented on the screen but could decrease UI performance")
 	rootCmd.PersistentFlags().Int64P("max-message-count", "", 100_000, "Max number of messages that will be stored in a buffer for further retrieval. On buffer overflow, oldest messages will be removed.")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose logs")
+	rootCmd.PersistentFlags().BoolP("disable-ansi-code-stripping", "", false, "Use this flag to disable Logdy from stripping ANSI sequence codes")
 	rootCmd.PersistentFlags().BoolP("append-to-file-raw", "", false, "When 'append-to-file' is set, raw lines without metadata will be saved to a file")
 	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that helps improve Logdy")
 	rootCmd.PersistentFlags().BoolP("no-updates", "u", false, "Opt-out from checking updates on program startup")

@@ -4,6 +4,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"regexp"
 	"time"
 )
 
@@ -54,4 +55,22 @@ func PickRandom[T any](slice []T) T {
 	}
 	index := rand.Intn(len(slice))
 	return slice[index]
+}
+
+func StripAnsi(str string) string {
+	/**
+	Regular expression to match ANSI escape sequences
+	Regular Expression: We define a regular expression pattern using regexp.MustCompile. This pattern matches:
+	\x1B: Escape character (ASCII code 27)
+	\[: Opening square bracket
+	[0-?]*: Zero or more occurrences of characters between 0 and ? (for parameter sequences)
+	[ -/]*: Zero or more occurrences of spaces, hyphens, or forward slashes (for intermediate bytes)
+	[@-~]: A single character between @ and ~ (for final byte)
+
+	This approach uses a simplified regular expression that might not capture all possible ANSI escape sequences.
+	For more comprehensive removal, you might need a more complex regular expression or consider
+	using a dedicated library like "https://pkg.go.dev/github.com/pborman/ansi"
+	*/
+	ansiEscape := regexp.MustCompile(`\x1B\[[0-?]*[ -/]*[@-~]`)
+	return ansiEscape.ReplaceAllString(str, "")
 }

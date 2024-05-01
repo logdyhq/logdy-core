@@ -15,8 +15,14 @@ import (
 )
 
 var FallthroughGlobal = false
+var DisableANSICodeStripping = false
 
 func produce(ch chan models.Message, line string, mt models.LogType, mo *models.MessageOrigin) {
+
+	if !DisableANSICodeStripping {
+		line = utils.StripAnsi(line)
+	}
+
 	validJson := fastjson.Validate(line)
 	var cs json.RawMessage
 	if validJson == nil {
