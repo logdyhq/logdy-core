@@ -137,8 +137,12 @@ var forwardCmd = &cobra.Command{
 	},
 }
 
+var utilsCmd = &cobra.Command{
+	Use: "utils",
+}
+
 var utilsCutByStringCmd = &cobra.Command{
-	Use:   "utils cut-by-string <file> <start> <end> {case-insensitive = true} {out-file = ''}",
+	Use:   "cut-by-string <file> <start> <end> {case-insensitive = true} {out-file = ''}",
 	Short: "A utility that cuts a file by a start and end string into a new file or standard output.",
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(3),
@@ -149,7 +153,7 @@ var utilsCutByStringCmd = &cobra.Command{
 }
 
 var utilsCutByDateCmd = &cobra.Command{
-	Use:   "utils cut-by-date <file> <start> <end> <date-format> <search-offset> {out-file = ''}",
+	Use:   "cut-by-date <file> <start> <end> <date-format> <search-offset> {out-file = ''}",
 	Short: "A utility that cuts a file by a start and end date into a new file or standard output.",
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(5),
@@ -197,8 +201,9 @@ func init() {
 	utils.InitLogger()
 	ch = make(chan models.Message, 1000)
 
-	rootCmd.AddCommand(utilsCutByStringCmd)
-	rootCmd.AddCommand(utilsCutByDateCmd)
+	rootCmd.AddCommand(utilsCmd)
+	utilsCmd.AddCommand(utilsCutByStringCmd)
+	utilsCmd.AddCommand(utilsCutByDateCmd)
 
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
 	rootCmd.PersistentFlags().StringP("ui-ip", "", "127.0.0.1", "Bind Web UI server to a specific IP address")
