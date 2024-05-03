@@ -29,6 +29,7 @@ func TestClientStartAddToBufferOverSize(t *testing.T) {
 		ch <- Message{Id: strconv.Itoa(i)}
 	}
 	assert.Equal(t, c.ring.Size(), 100)
+	time.Sleep(1 * time.Millisecond)
 
 	msg, err := c.ring.PeekIdx(0)
 	assert.Equal(t, err, nil)

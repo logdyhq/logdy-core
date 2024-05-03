@@ -58,7 +58,7 @@ func ReadFiles(ch chan models.Message, files []string) {
 			continue
 		}
 
-		r, size, bar := utils.OpenFileForReading(file)
+		r, size, bar := utils.OpenFileForReadingWithProgress(file)
 		utils.Logger.WithFields(logrus.Fields{
 			"path":       file,
 			"size_bytes": size,

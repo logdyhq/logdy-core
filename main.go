@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -41,7 +42,8 @@ where you can filter and browse well formatted application output.
 		}
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		if strings.HasPrefix(cmd.CommandPath(), "logdy completion") {
+		if strings.HasPrefix(cmd.CommandPath(), "logdy completion") ||
+			strings.HasPrefix(cmd.CommandPath(), "logdy utils") {
 			// if logdy completion command is run, dont start websever, just
 			// exit the process
 			os.Exit(0)
@@ -135,6 +137,32 @@ var forwardCmd = &cobra.Command{
 	},
 }
 
+var utilsCutByStringCmd = &cobra.Command{
+	Use:   "utils cut-by-string <file> <start> <end> {case-insensitive = true} {out-file = ''}",
+	Short: "A utility that cuts a file by a start and end string into a new file or standard output.",
+	Long:  ``,
+	Args:  cobra.MinimumNArgs(3),
+	Run: func(cmd *cobra.Command, args []string) {
+		utils.Logger.Out = ioutil.Discard
+		modes.UtilsCutByString(args[1], args[2], args[3], args[4] == "true", args[5], "", 0)
+	},
+}
+
+var utilsCutByDateCmd = &cobra.Command{
+	Use:   "utils cut-by-date <file> <start> <end> <date-format> <search-offset> {out-file = ''}",
+	Short: "A utility that cuts a file by a start and end date into a new file or standard output.",
+	Long:  ``,
+	Args:  cobra.MinimumNArgs(5),
+	Run: func(cmd *cobra.Command, args []string) {
+		utils.Logger.Out = ioutil.Discard
+		offset, err := strconv.Atoi(args[4])
+		if err != nil {
+			panic(err)
+		}
+		modes.UtilsCutByString(args[0], args[1], args[2], false, args[3], args[5], offset)
+	},
+}
+
 var listenSocketCmd = &cobra.Command{
 	Use:   "socket <port1> [<port2> ... <portN>]",
 	Short: "Sets up a port to listen on for incoming log messages. Example `logdy socket 8233`. You can setup multiple ports `logdy socket 8123 8124 8125`",
@@ -166,7 +194,12 @@ var demoSocketCmd = &cobra.Command{
 }
 
 func init() {
+	utils.InitLogger()
 	ch = make(chan models.Message, 1000)
+
+	rootCmd.AddCommand(utilsCutByStringCmd)
+	rootCmd.AddCommand(utilsCutByDateCmd)
+
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
 	rootCmd.PersistentFlags().StringP("ui-ip", "", "127.0.0.1", "Bind Web UI server to a specific IP address")
 	rootCmd.PersistentFlags().StringP("ui-pass", "", "", "Password that will be used to authenticate in the UI")
@@ -180,8 +213,6 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that helps improve Logdy")
 	rootCmd.PersistentFlags().BoolP("no-updates", "u", false, "Opt-out from checking updates on program startup")
 	rootCmd.PersistentFlags().BoolP("fallthrough", "t", false, "Will fallthrough all of the stdin received to the terminal as is (will display incoming messages)")
-
-	utils.InitLogger()
 
 	rootCmd.AddCommand(listenStdCmd)
 
@@ -199,9 +230,11 @@ func init() {
 
 func main() {
 	utils.Logger.Out = os.Stdout
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
 	utils.Logger.Debug("Exiting")
 }

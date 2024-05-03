@@ -69,7 +69,7 @@ func LineCounterWithChannel(r io.Reader, fn func(line Line, cancel func())) erro
 	}
 }
 
-func OpenFileForReading(file string) (io.Reader, int64, *pb.ProgressBar) {
+func OpenFileForReadingWithProgress(file string) (io.Reader, int64, *pb.ProgressBar) {
 	reader, err := os.Open(file)
 
 	if err != nil {
@@ -79,5 +79,34 @@ func OpenFileForReading(file string) (io.Reader, int64, *pb.ProgressBar) {
 	fi, _ := reader.Stat()
 	bar := pb.Full.Start64(fi.Size())
 	return bar.NewProxyReader(reader), fi.Size(), bar
-	// return reader, fi.Size()
+}
+
+func OpenFileForReading(file string) (io.Reader, int64) {
+	reader, err := os.Open(file)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fi, _ := reader.Stat()
+	return reader, fi.Size()
+}
+
+func LineCounter(r io.Reader) (int, error) {
+	buf := make([]byte, 32*1024)
+	count := 0
+	lineSep := []byte{'\n'}
+
+	for {
+		c, err := r.Read(buf)
+		count += bytes.Count(buf[:c], lineSep)
+
+		switch {
+		case err == io.EOF:
+			return count, nil
+
+		case err != nil:
+			return count, err
+		}
+	}
 }
