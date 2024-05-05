@@ -138,7 +138,8 @@ var forwardCmd = &cobra.Command{
 }
 
 var UtilsCmd = &cobra.Command{
-	Use: "utils",
+	Use:   "utils",
+	Short: "A set of utility commands that help working with large files",
 }
 
 var utilsCutByStringCmd = &cobra.Command{
