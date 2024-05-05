@@ -11,6 +11,89 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func UtilsCutByLineNumber(file string, count int, offset int, outFile string) {
+
+	if count < 0 {
+		panic("`count` must be greater than 0")
+	}
+	if offset < 0 {
+		panic("`offset` must be greater than 0")
+	}
+
+	_, err := os.Stat(file)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"path":  file,
+			"error": err.Error(),
+		}).Error("Reading file failed")
+		return
+	}
+
+	var size int64
+	var bar *pb.ProgressBar
+	var r io.Reader
+	if outFile == "" {
+		r, size = utils.OpenFileForReading(file)
+	} else {
+		r, size, bar = utils.OpenFileForReadingWithProgress(file)
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"path":       file,
+		"size_bytes": size,
+	}).Info("Reading file")
+
+	var f *os.File
+	if outFile != "" {
+		f, err = os.OpenFile(outFile, os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			panic(err)
+		}
+		defer f.Close() // Close the file when we're done
+	}
+
+	started := false
+	stopped := false
+	ln := 0
+	utils.LineCounterWithChannel(r, func(line utils.Line, cancel func()) {
+		ln++
+
+		if stopped {
+			return
+		}
+
+		if ln == offset {
+			started = true
+		}
+
+		if !started {
+			return
+		}
+
+		if outFile == "" {
+			os.Stdout.Write(line.Line)
+			os.Stdout.Write([]byte{'\n'})
+		} else {
+			f.Write(line.Line)
+			f.Write([]byte{'\n'})
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		if ln == count+offset-1 {
+			cancel()
+			stopped = true
+			return
+		}
+
+	})
+
+	if outFile != "" {
+		bar.Finish()
+	}
+}
+
 func UtilsCutByString(file string, start string, end string, caseInsensitive bool, outFile string, dateFormat string, searchOffset int) {
 	_, err := os.Stat(file)
 	if err != nil {
@@ -55,11 +138,11 @@ func UtilsCutByString(file string, start string, end string, caseInsensitive boo
 	if dateFormat != "" {
 		startDate, err = time.Parse(dateFormat, start)
 		if err != nil {
-			panic(err)
+			panic("Error while parsing input `start` date: " + err.Error())
 		}
 		endDate, err = time.Parse(dateFormat, end)
 		if err != nil {
-			panic(err)
+			panic("Error while parsing input `end` date: " + err.Error())
 		}
 	}
 
@@ -83,7 +166,7 @@ func UtilsCutByString(file string, start string, end string, caseInsensitive boo
 			t, err := time.Parse(dateFormat, ln[searchOffset:searchOffset+len(dateFormat)])
 
 			if err != nil {
-				panic(err)
+				return
 			}
 
 			if !t.IsZero() && (t.After(startDate) || t.Equal(startDate)) {
@@ -116,7 +199,7 @@ func UtilsCutByString(file string, start string, end string, caseInsensitive boo
 			t, err := time.Parse(dateFormat, ln[searchOffset:searchOffset+len(dateFormat)])
 
 			if err != nil {
-				panic(err)
+				return
 			}
 
 			if !t.IsZero() && (t.After(endDate) || t.Equal(endDate)) {

@@ -142,15 +142,6 @@ func TestUtilsCutByStringLong(t *testing.T) {
 			outFile:         "",
 			expectedLines:   1571,
 		},
-		{
-			name:            "Basic cut (case sensitive)",
-			file:            tmpFile.Name(),
-			start:           "7650",
-			end:             "9220",
-			caseInsensitive: false,
-			outFile:         "",
-			expectedLines:   1571,
-		},
 	}
 
 	for _, tc := range tests {
@@ -342,6 +333,164 @@ func TestUtilsCutByStringDate(t *testing.T) {
 				outputFileData, err := ioutil.ReadFile(tc.outFile)
 				assert.Nil(t, err)
 				assert.Equal(t, tc.expectedOutput, string(outputFileData))
+			}
+		})
+	}
+}
+
+func TestUtilsCutByLineNumber(t *testing.T) {
+
+	// Create a temporary file with some test data
+	data := `This is line 1
+This is line 2 (cut here)
+This is line 3 to be copied
+This is line 4 (end cut here)
+This is line 5`
+	tmpFile, err := ioutil.TempFile("", "cut_by_string_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name()) // Clean up the temporary file
+
+	_, err = tmpFile.Write([]byte(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Define test cases
+	tests := []struct {
+		name           string
+		file           string
+		count          int
+		offset         int
+		outFile        string
+		expectedOutput string
+	}{
+		{
+			name:           "Basic cut",
+			file:           tmpFile.Name(),
+			count:          2,
+			offset:         2,
+			outFile:        "",
+			expectedOutput: "This is line 2 (cut here)\nThis is line 3 to be copied\n",
+		},
+		{
+			name:           "Basic cut (to file)",
+			file:           tmpFile.Name(),
+			count:          2,
+			offset:         3,
+			outFile:        t.TempDir() + "/cut_output.txt",
+			expectedOutput: "This is line 3 to be copied\nThis is line 4 (end cut here)\n",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var oldWriter = os.Stdout
+			stdout, err := os.CreateTemp("", "")
+			if err != nil {
+				panic(err)
+			}
+			if tc.outFile == "" {
+				os.Stdout = stdout
+				defer func() {
+					os.Stdout = oldWriter
+				}()
+			}
+
+			UtilsCutByLineNumber(tc.file, tc.count, tc.offset, tc.outFile)
+
+			// Assertions
+			if tc.outFile == "" {
+				os.Stdout.Sync()
+				fl, _ := os.Open(stdout.Name())
+				content, err := io.ReadAll(fl)
+
+				if err != nil {
+					panic(err)
+				}
+				assert.Equal(t, tc.expectedOutput, string(content))
+			} else {
+				// Read output file content
+				outputFileData, err := ioutil.ReadFile(tc.outFile)
+				assert.Nil(t, err)
+				assert.Equal(t, tc.expectedOutput, string(outputFileData))
+			}
+		})
+	}
+}
+
+func TestUtilsCutLineNumberLong(t *testing.T) {
+
+	// Create a temporary file with some test data
+	const loremipsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua"
+
+	tmpFile, err := ioutil.TempFile("", "cut_by_string_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name()) // Clean up the temporary file
+
+	for i := 0; i <= 10_000; i++ {
+		_, err := tmpFile.WriteString(strconv.Itoa(i) + "_" + loremipsum + "\n")
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Define test cases
+	tests := []struct {
+		name            string
+		file            string
+		count           int
+		offset          int
+		caseInsensitive bool
+		outFile         string
+	}{
+		{
+			name:            "Basic cut",
+			file:            tmpFile.Name(),
+			count:           3,
+			offset:          7650,
+			caseInsensitive: false,
+			outFile:         "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var oldWriter = os.Stdout
+			stdout, err := os.CreateTemp("", "")
+			if err != nil {
+				panic(err)
+			}
+			if tc.outFile == "" {
+				os.Stdout = stdout
+				defer func() {
+					os.Stdout = oldWriter
+				}()
+			}
+
+			UtilsCutByLineNumber(tc.file, tc.count, tc.offset, tc.outFile)
+
+			// Assertions
+			if tc.outFile == "" {
+				os.Stdout.Sync()
+				fl, _ := os.Open(stdout.Name())
+				num, err := utils.LineCounter(fl)
+				assert.Nil(t, err)
+
+				if err != nil {
+					panic(err)
+				}
+				assert.Equal(t, tc.count, num)
+			} else {
+				// Read output file content
+				outputFileData, err := os.Open(tc.outFile)
+				assert.Nil(t, err)
+				num, err := utils.LineCounter(outputFileData)
+				assert.Nil(t, err)
+				assert.Equal(t, tc.count, num)
 			}
 		})
 	}

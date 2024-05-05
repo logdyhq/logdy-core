@@ -137,7 +137,7 @@ var forwardCmd = &cobra.Command{
 	},
 }
 
-var utilsCmd = &cobra.Command{
+var UtilsCmd = &cobra.Command{
 	Use: "utils",
 }
 
@@ -148,7 +148,19 @@ var utilsCutByStringCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		utils.Logger.Out = ioutil.Discard
-		modes.UtilsCutByString(args[1], args[2], args[3], args[4] == "true", args[5], "", 0)
+		modes.UtilsCutByString(utils.AString(args, 0, ""), utils.AString(args, 1, ""), utils.AString(args, 2, ""),
+			utils.ABool(args, 3, true), utils.AString(args, 4, ""), "", 0)
+	},
+}
+var utilsCutByLineNumberCmd = &cobra.Command{
+	Use:   "cut-by-line-number <file> <count> <offset> {out-file = ''}",
+	Short: "A utility that cuts a file by a line number count and offset into a new file or standard output.",
+	Long:  ``,
+	Args:  cobra.MinimumNArgs(3),
+	Run: func(cmd *cobra.Command, args []string) {
+		utils.Logger.Out = ioutil.Discard
+
+		modes.UtilsCutByLineNumber(utils.AString(args, 0, ""), utils.AInt(args, 1, 0), utils.AInt(args, 2, 0), utils.AString(args, 3, ""))
 	},
 }
 
@@ -159,11 +171,9 @@ var utilsCutByDateCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(5),
 	Run: func(cmd *cobra.Command, args []string) {
 		utils.Logger.Out = ioutil.Discard
-		offset, err := strconv.Atoi(args[4])
-		if err != nil {
-			panic(err)
-		}
-		modes.UtilsCutByString(args[0], args[1], args[2], false, args[3], args[5], offset)
+
+		modes.UtilsCutByString(utils.AString(args, 0, ""), utils.AString(args, 1, ""), utils.AString(args, 2, ""), false,
+			utils.AString(args, 5, ""), utils.AString(args, 3, ""), utils.AInt(args, 4, 0))
 	},
 }
 
@@ -201,9 +211,10 @@ func init() {
 	utils.InitLogger()
 	ch = make(chan models.Message, 1000)
 
-	rootCmd.AddCommand(utilsCmd)
-	utilsCmd.AddCommand(utilsCutByStringCmd)
-	utilsCmd.AddCommand(utilsCutByDateCmd)
+	rootCmd.AddCommand(UtilsCmd)
+	UtilsCmd.AddCommand(utilsCutByStringCmd)
+	UtilsCmd.AddCommand(utilsCutByDateCmd)
+	UtilsCmd.AddCommand(utilsCutByLineNumberCmd)
 
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
 	rootCmd.PersistentFlags().StringP("ui-ip", "", "127.0.0.1", "Bind Web UI server to a specific IP address")

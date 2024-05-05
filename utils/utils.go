@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"os"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -73,4 +74,35 @@ func StripAnsi(str string) string {
 	*/
 	ansiEscape := regexp.MustCompile(`\x1B\[[0-?]*[ -/]*[@-~]`)
 	return ansiEscape.ReplaceAllString(str, "")
+}
+
+func AString(args []string, index int, def string) string {
+	if index < 0 || index >= len(args) {
+		return def
+	}
+	return args[index]
+}
+
+func AInt(args []string, index int, def int) int {
+	if index < 0 || index >= len(args) {
+		return def
+	}
+	// Parse the string to int (handle potential parsing errors)
+	value, err := strconv.Atoi(args[index])
+	if err != nil {
+		// Handle parsing error (e.g., return default value)
+		return def
+	}
+	return value
+}
+
+func ABool(args []string, index int, def bool) bool {
+	if index < 0 || index >= len(args) {
+		return def
+	}
+	// Parse the string to int (handle potential parsing errors)
+	if args[index] == "true" {
+		return true
+	}
+	return false
 }
