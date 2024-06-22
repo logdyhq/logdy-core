@@ -16,13 +16,16 @@ func TestConsumeStdinAndForwardToPort(t *testing.T) {
 
 	msgReceived := []string{}
 	wg := sync.WaitGroup{}
+	wgServer := sync.WaitGroup{}
 	wg.Add(2)
+	wgServer.Add(1)
 	go func() {
 		l, err := net.Listen("tcp", ":8123")
 		if err != nil {
 			panic(err)
 		}
 		defer l.Close()
+		wgServer.Done()
 		for {
 			conn, err := l.Accept()
 			if err != nil {
@@ -50,6 +53,7 @@ func TestConsumeStdinAndForwardToPort(t *testing.T) {
 
 	defer funcDefer()
 
+	wgServer.Wait()
 	ConsumeStdinAndForwardToPort("", "8123")
 
 	wg.Wait()
