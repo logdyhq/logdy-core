@@ -8,13 +8,13 @@ import (
 	"strconv"
 	"strings"
 
-	"logdy/utils"
+	"github.com/logdyhq/logdy-core/utils"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"logdy/models"
-	"logdy/modes"
+	"github.com/logdyhq/logdy-core/models"
+	"github.com/logdyhq/logdy-core/modes"
 )
 
 var ch chan models.Message

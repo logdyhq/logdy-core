@@ -5,16 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"logdy/utils"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/logdyhq/logdy-core/utils"
+
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 
-	"logdy/models"
+	"github.com/logdyhq/logdy-core/models"
 )
 
 func handleCheckPass(uiPass string) func(w http.ResponseWriter, r *http.Request) {

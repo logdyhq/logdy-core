@@ -9,9 +9,8 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v6"
-
-	"logdy/models"
-	"logdy/utils"
+	"github.com/logdyhq/logdy-core/models"
+	"github.com/logdyhq/logdy-core/utils"
 )
 
 var correlationIds []string

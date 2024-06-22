@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
-	"logdy/models"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/logdyhq/logdy-core/models"
 )
 
 func TestProcessIncomingMessages_NoFileAppend(t *testing.T) {

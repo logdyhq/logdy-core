@@ -3,11 +3,11 @@ package modes
 import (
 	"io"
 	"io/ioutil"
-	"logdy/utils"
 	"os"
 	"strconv"
 	"testing"
 
+	"github.com/logdyhq/logdy-core/utils"
 	"github.com/stretchr/testify/assert" // Replace with your favorite testing framework
 )
 

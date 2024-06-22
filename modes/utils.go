@@ -2,12 +2,12 @@ package modes
 
 import (
 	"io"
-	"logdy/utils"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/cheggaaa/pb/v3"
+	"github.com/logdyhq/logdy-core/utils"
 	"github.com/sirupsen/logrus"
 )
 

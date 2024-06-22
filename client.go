@@ -4,9 +4,10 @@ import (
 	"sync"
 	"time"
 
-	. "logdy/models"
-	"logdy/ring"
-	"logdy/utils"
+	"github.com/logdyhq/logdy-core/ring"
+	"github.com/logdyhq/logdy-core/utils"
+
+	. "github.com/logdyhq/logdy-core/models"
 )
 
 var BULK_WINDOW_MS int64 = 100

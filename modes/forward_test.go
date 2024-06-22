@@ -7,9 +7,8 @@ import (
 	"sync"
 	"testing"
 
+	. "github.com/logdyhq/logdy-core/models"
 	"github.com/stretchr/testify/assert"
-
-	. "logdy/models"
 )
 
 func TestConsumeStdinAndForwardToPort(t *testing.T) {

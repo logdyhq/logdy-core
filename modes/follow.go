@@ -2,13 +2,14 @@ package modes
 
 import (
 	"io"
-	"logdy/utils"
 	"os"
+
+	"github.com/logdyhq/logdy-core/utils"
 
 	"github.com/nxadm/tail"
 	"github.com/sirupsen/logrus"
 
-	"logdy/models"
+	"github.com/logdyhq/logdy-core/models"
 )
 
 func FollowFiles(ch chan models.Message, files []string) {

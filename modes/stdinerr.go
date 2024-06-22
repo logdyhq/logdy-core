@@ -3,10 +3,10 @@ package modes
 import (
 	"bufio"
 	"io"
-	"logdy/utils"
 	"os/exec"
 
-	"logdy/models"
+	"github.com/logdyhq/logdy-core/models"
+	"github.com/logdyhq/logdy-core/utils"
 )
 
 func readOutput(reader io.Reader, outputCh chan models.Message, messageType models.LogType) {

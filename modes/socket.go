@@ -2,13 +2,12 @@ package modes
 
 import (
 	"bufio"
-	"logdy/utils"
 	"net"
 	"os"
 
+	"github.com/logdyhq/logdy-core/models"
+	"github.com/logdyhq/logdy-core/utils"
 	"github.com/sirupsen/logrus"
-
-	"logdy/models"
 )
 
 func handleConnection(conn net.Conn, ch chan models.Message, port string) {

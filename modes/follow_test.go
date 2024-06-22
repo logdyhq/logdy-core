@@ -7,9 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/logdyhq/logdy-core/models"
 	"github.com/stretchr/testify/assert"
-
-	"logdy/models"
 )
 
 func TestFollowFiles(t *testing.T) {

@@ -3,15 +3,14 @@ package modes
 import (
 	"encoding/json"
 	"fmt"
-	"logdy/utils"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/logdyhq/logdy-core/models"
+	"github.com/logdyhq/logdy-core/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/valyala/fastjson"
-
-	"logdy/models"
 )
 
 var FallthroughGlobal = false

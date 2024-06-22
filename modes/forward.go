@@ -4,11 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"logdy/utils"
 	"net"
 	"os"
 
-	"logdy/models"
+	"github.com/logdyhq/logdy-core/models"
+	"github.com/logdyhq/logdy-core/utils"
 )
 
 func ConsumeStdinAndForwardToPort(ip string, port string) {
