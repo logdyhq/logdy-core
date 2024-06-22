@@ -55,4 +55,5 @@ type InitMessage struct {
 	AnalyticsEnabled bool   `json:"analyticsEnabled"`
 	AuthRequired     bool   `json:"authRequired"`
 	ConfigStr        string `json:"configStr"`
+	ApiPrefix        string `json:"apiPrefix"`
 }

@@ -1,4 +1,4 @@
-package main
+package http
 
 import (
 	"encoding/json"
@@ -40,31 +40,32 @@ func handleCheckPass(uiPass string) func(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func handleStatus(configFilePath string, analyticsEnabled bool, uiPass string) func(w http.ResponseWriter, r *http.Request) {
+func handleStatus(config *Config) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		utils.Logger.Debug("/api/status")
 
 		configStr := ""
-		if configFilePath != "" {
+		if config.ConfigFilePath != "" {
 			utils.Logger.Debug("Reading config file")
-			configStr = utils.LoadFile(configFilePath)
+			configStr = utils.LoadFile(config.ConfigFilePath)
 		}
 
 		initMsg, _ := json.Marshal(models.InitMessage{
 			BaseMessage: models.BaseMessage{
 				MessageType: models.MessageTypeInit,
 			},
-			AnalyticsEnabled: analyticsEnabled,
-			AuthRequired:     uiPass != "",
+			AnalyticsEnabled: config.AnalyticsEnabled,
+			AuthRequired:     config.UiPass != "",
 			ConfigStr:        configStr,
+			ApiPrefix:        config.HttpPathPrefix,
 		})
 
 		w.Write(initMsg)
 	}
 }
 
-func handleWs(uiPass string, clients *Clients) func(w http.ResponseWriter, r *http.Request) {
+func handleWs(uiPass string, clients *ClientsStruct) func(w http.ResponseWriter, r *http.Request) {
 
 	wsUpgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -245,7 +246,7 @@ func getClientId(r *http.Request) (string, error) {
 	return cid, nil
 }
 
-func getClientOrErr(r *http.Request, w http.ResponseWriter, clients *Clients) *Client {
+func getClientOrErr(r *http.Request, w http.ResponseWriter, clients *ClientsStruct) *Client {
 	cid, err := getClientId(r)
 
 	if err != nil {
@@ -265,7 +266,7 @@ func getClientOrErr(r *http.Request, w http.ResponseWriter, clients *Clients) *C
 	return cl
 }
 
-func handleClientStatus(clients *Clients) func(w http.ResponseWriter, r *http.Request) {
+func handleClientStatus(clients *ClientsStruct) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cl := getClientOrErr(r, w, clients)
 		if cl == nil {
@@ -289,7 +290,7 @@ func handleClientStatus(clients *Clients) func(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func handleClientLoad(clients *Clients) func(w http.ResponseWriter, r *http.Request) {
+func handleClientLoad(clients *ClientsStruct) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cl := getClientOrErr(r, w, clients)
 		if cl == nil {
@@ -318,7 +319,7 @@ func handleClientLoad(clients *Clients) func(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func handleClientPeek(clients *Clients) func(w http.ResponseWriter, r *http.Request) {
+func handleClientPeek(clients *ClientsStruct) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cl := getClientOrErr(r, w, clients)
 		if cl == nil {
@@ -348,33 +349,62 @@ func handleClientPeek(clients *Clients) func(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-var clients *Clients
+func HandleHttp(config *Config) {
 
-func handleHttp(httpPort string, uiIp string, analyticsEnabled bool, uiPass string, configFilePath string, bulkWindowMs int64) {
 	assets, _ := Assets()
 
-	BULK_WINDOW_MS = bulkWindowMs
+	BULK_WINDOW_MS = config.BulkWindowMs
+
+	if len(config.HttpPathPrefix) > 0 && config.HttpPathPrefix[0] != byte('/') {
+		config.HttpPathPrefix = "/" + config.HttpPathPrefix
+	}
+
+	if len(config.HttpPathPrefix) == 0 {
+		config.HttpPathPrefix = "/"
+	}
 
 	// Use the file system to serve static files
 	fs := http.FileServer(http.FS(assets))
-	http.Handle("/", http.StripPrefix("/", fs))
 
-	http.HandleFunc("/api/check-pass", handleCheckPass(uiPass))
-	http.HandleFunc("/api/status", handleStatus(configFilePath, analyticsEnabled, uiPass))
-	http.HandleFunc("/api/client/set-status", handleClientStatus(clients))
-	http.HandleFunc("/api/client/load", handleClientLoad(clients))
-	http.HandleFunc("/api/client/peek-log", handleClientPeek(clients))
+	http.Handle(config.HttpPathPrefix, http.StripPrefix(config.HttpPathPrefix, fs))
+
+	http.HandleFunc(config.HttpPathPrefix+"api/check-pass", handleCheckPass(config.UiPass))
+	http.HandleFunc(config.HttpPathPrefix+"api/status", handleStatus(config))
+	http.HandleFunc(config.HttpPathPrefix+"api/client/set-status", handleClientStatus(clients))
+	http.HandleFunc(config.HttpPathPrefix+"api/client/load", handleClientLoad(clients))
+	http.HandleFunc(config.HttpPathPrefix+"api/client/peek-log", handleClientPeek(clients))
 
 	// Listen for WebSocket connections on port 8080.
-	http.HandleFunc("/ws", handleWs(uiPass, clients))
+	http.HandleFunc(config.HttpPathPrefix+"ws", handleWs(config.UiPass, clients))
 
+}
+
+func StartWebserver(config *Config) {
 	utils.Logger.WithFields(logrus.Fields{
-		"port": httpPort,
-	}).Info("WebUI started, visit http://" + uiIp + ":" + httpPort)
+		"port": config.ServerPort,
+	}).Info("WebUI started, visit http://" + config.ServerIp + ":" + config.ServerPort + config.HttpPathPrefix)
 
-	err := http.ListenAndServe(uiIp+":"+httpPort, nil)
+	err := http.ListenAndServe(config.ServerIp+":"+config.ServerPort, nil)
 
 	if err != nil {
 		panic(err)
+	}
+}
+
+type Config struct {
+	AnalyticsEnabled bool
+	UiPass           string
+	ConfigFilePath   string
+	BulkWindowMs     int64
+	HttpPathPrefix   string
+	ServerPort       string
+	ServerIp         string
+}
+
+func HandleHttpAndServe(config Config) {
+	HandleHttp(&config)
+
+	if config.ServerPort != "" && config.ServerIp != "" {
+		StartWebserver(&config)
 	}
 }

@@ -1,14 +1,19 @@
-package main
+package http
 
 import (
 	"sync"
 	"time"
 
+	"github.com/logdyhq/logdy-core/models"
 	"github.com/logdyhq/logdy-core/ring"
 	"github.com/logdyhq/logdy-core/utils"
+	"github.com/spf13/cobra"
 
 	. "github.com/logdyhq/logdy-core/models"
 )
+
+var clients *ClientsStruct
+var Ch chan models.Message
 
 var BULK_WINDOW_MS int64 = 100
 var FLUSH_BUFFER_SIZE = 1000
@@ -113,7 +118,7 @@ func NewClient() *Client {
 	return c
 }
 
-type Clients struct {
+type ClientsStruct struct {
 	started            bool
 	mu                 sync.Mutex
 	mainChan           <-chan Message
@@ -123,8 +128,8 @@ type Clients struct {
 	stats              Stats
 }
 
-func NewClients(msgs <-chan Message, maxCount int64) *Clients {
-	cls := &Clients{
+func NewClients(msgs <-chan Message, maxCount int64) *ClientsStruct {
+	cls := &ClientsStruct{
 		mu:                 sync.Mutex{},
 		mainChan:           msgs,
 		clients:            map[string]*Client{},
@@ -141,12 +146,12 @@ func NewClients(msgs <-chan Message, maxCount int64) *Clients {
 	return cls
 }
 
-func (c *Clients) GetClient(clientId string) (*Client, bool) {
+func (c *ClientsStruct) GetClient(clientId string) (*Client, bool) {
 	cl, ok := c.clients[clientId]
 	return cl, ok
 }
 
-func (c *Clients) Load(clientId string, startCount int, count int, includeStart bool) {
+func (c *ClientsStruct) Load(clientId string, startCount int, count int, includeStart bool) {
 	c.PauseFollowing(clientId)
 	cl := c.clients[clientId]
 	cl.waitForBufferDrain()
@@ -182,7 +187,7 @@ func (c *Clients) Load(clientId string, startCount int, count int, includeStart 
 
 }
 
-func (c *Clients) PeekLog(idxs []int) []Message {
+func (c *ClientsStruct) PeekLog(idxs []int) []Message {
 	msgs := []Message{}
 
 	for _, idx := range idxs {
@@ -199,10 +204,10 @@ func (c *Clients) PeekLog(idxs []int) []Message {
 	return msgs
 }
 
-func (c *Clients) Stats() Stats {
+func (c *ClientsStruct) Stats() Stats {
 	return c.stats
 }
-func (c *Clients) ClientStats(clientId string) ClientStats {
+func (c *ClientsStruct) ClientStats(clientId string) ClientStats {
 	stats := ClientStats{}
 	cl, exists := c.GetClient(clientId)
 	if !exists {
@@ -225,7 +230,7 @@ func (c *Clients) ClientStats(clientId string) ClientStats {
 	return stats
 }
 
-func (c *Clients) ResumeFollowing(clientId string, sinceCursor bool) {
+func (c *ClientsStruct) ResumeFollowing(clientId string, sinceCursor bool) {
 	//pump back the items until last element seen
 
 	c.clients[clientId].bufferOpMu.Lock()
@@ -251,13 +256,13 @@ func (c *Clients) ResumeFollowing(clientId string, sinceCursor bool) {
 	c.clients[clientId].bufferOpMu.Unlock()
 }
 
-func (c *Clients) PauseFollowing(clientId string) {
+func (c *ClientsStruct) PauseFollowing(clientId string) {
 	c.clients[clientId].cursorStatus = CURSOR_STOPPED
 	c.clients[clientId].waitForBufferDrain()
 }
 
 // starts a delivery channel to all clients
-func (c *Clients) Start() {
+func (c *ClientsStruct) Start() {
 	if c.started {
 		utils.Logger.Debug("Clients delivery loop already started")
 		return
@@ -285,7 +290,7 @@ func (c *Clients) Start() {
 	}
 }
 
-func (c *Clients) Join(tailLen int, shouldFollow bool) *Client {
+func (c *ClientsStruct) Join(tailLen int, shouldFollow bool) *Client {
 	cl := NewClient()
 	c.clients[cl.id] = cl
 	c.currentlyConnected++
@@ -311,7 +316,7 @@ func (c *Clients) Join(tailLen int, shouldFollow bool) *Client {
 	return c.clients[cl.id]
 }
 
-func (c *Clients) Close(id string) {
+func (c *ClientsStruct) Close(id string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -323,4 +328,19 @@ func (c *Clients) Close(id string) {
 	cl.close()
 	delete(c.clients, id)
 	c.currentlyConnected--
+}
+
+func InitChannel() {
+	Ch = make(chan models.Message, 1000)
+}
+
+func InitializeClients(cmd *cobra.Command) {
+	if clients != nil {
+		return
+	}
+	appendToFile, _ := cmd.Flags().GetString("append-to-file")
+	appendToFileRaw, _ := cmd.Flags().GetBool("append-to-file-raw")
+	maxMessageCount, _ := cmd.Flags().GetInt64("max-message-count")
+	mainChan := utils.ProcessIncomingMessages(Ch, appendToFile, appendToFileRaw)
+	clients = NewClients(mainChan, maxMessageCount)
 }

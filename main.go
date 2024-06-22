@@ -13,11 +13,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/logdyhq/logdy-core/models"
+	"github.com/logdyhq/logdy-core/http"
 	"github.com/logdyhq/logdy-core/modes"
 )
-
-var ch chan models.Message
 
 var Version = "0.0.0"
 
@@ -56,7 +54,7 @@ where you can filter and browse well formatted application output.
 
 		if len(args) == 0 {
 			utils.Logger.Info("Listen to stdin (from pipe)")
-			go modes.ConsumeStdin(ch)
+			go modes.ConsumeStdin(http.Ch)
 		}
 
 		httpPort, _ := cmd.Flags().GetString("port")
@@ -72,20 +70,21 @@ where you can filter and browse well formatted application output.
 			utils.Logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
 		}
 
-		if clients == nil {
-			InitializeClients(cmd)
+		http.InitializeClients(cmd)
+
+		config := &http.Config{
+			AnalyticsEnabled: !noanalytics,
+			UiPass:           uiPass,
+			ConfigFilePath:   configFile,
+			BulkWindowMs:     bulkWindow,
+			ServerPort:       httpPort,
+			ServerIp:         uiIp,
+			HttpPathPrefix:   "",
 		}
 
-		handleHttp(httpPort, uiIp, !noanalytics, uiPass, configFile, bulkWindow)
+		http.HandleHttp(config)
+		http.StartWebserver(config)
 	},
-}
-
-func InitializeClients(cmd *cobra.Command) {
-	appendToFile, _ := cmd.Flags().GetString("append-to-file")
-	appendToFileRaw, _ := cmd.Flags().GetBool("append-to-file-raw")
-	maxMessageCount, _ := cmd.Flags().GetInt64("max-message-count")
-	mainChan := utils.ProcessIncomingMessages(ch, appendToFile, appendToFileRaw)
-	clients = NewClients(mainChan, maxMessageCount)
 }
 
 var listenStdCmd = &cobra.Command{
@@ -96,7 +95,7 @@ var listenStdCmd = &cobra.Command{
 
 		if len(args) == 0 {
 			utils.Logger.Info("Listen to stdin (from pipe)")
-			go modes.ConsumeStdin(ch)
+			go modes.ConsumeStdin(http.Ch)
 			return
 		}
 
@@ -104,7 +103,7 @@ var listenStdCmd = &cobra.Command{
 			"cmd": args[0],
 		}).Info("Listen to command stdout")
 		arg := strings.Split(args[0], " ")
-		modes.StartCmd(ch, arg[0], arg[1:])
+		modes.StartCmd(http.Ch, arg[0], arg[1:])
 	},
 }
 
@@ -114,14 +113,14 @@ var followCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		InitializeClients(cmd)
+		http.InitializeClients(cmd)
 		fullRead, _ := cmd.Flags().GetBool("full-read")
 
 		if fullRead {
-			modes.ReadFiles(ch, args)
+			modes.ReadFiles(http.Ch, args)
 		}
 
-		modes.FollowFiles(ch, args)
+		modes.FollowFiles(http.Ch, args)
 	},
 }
 
@@ -185,7 +184,7 @@ var listenSocketCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ip, _ := cmd.Flags().GetString("ip")
-		go modes.StartSocketServers(ch, ip, args)
+		go modes.StartSocketServers(http.Ch, ip, args)
 	},
 }
 
@@ -204,13 +203,13 @@ var demoSocketCmd = &cobra.Command{
 			}
 		}
 
-		go modes.GenerateRandomData(produceJson, num, ch, context.Background())
+		go modes.GenerateRandomData(produceJson, num, http.Ch, context.Background())
 	},
 }
 
 func init() {
 	utils.InitLogger()
-	ch = make(chan models.Message, 1000)
+	http.InitChannel()
 
 	rootCmd.AddCommand(UtilsCmd)
 	UtilsCmd.AddCommand(utilsCutByStringCmd)
