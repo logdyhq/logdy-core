@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -148,7 +148,7 @@ var utilsCutByStringCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.Logger.Out = ioutil.Discard
+		utils.Logger.Out = io.Discard
 		modes.UtilsCutByString(utils.AString(args, 0, ""), utils.AString(args, 1, ""), utils.AString(args, 2, ""),
 			utils.ABool(args, 3, true), utils.AString(args, 4, ""), "", 0)
 	},
@@ -159,7 +159,7 @@ var utilsCutByLineNumberCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.Logger.Out = ioutil.Discard
+		utils.Logger.Out = io.Discard
 
 		modes.UtilsCutByLineNumber(utils.AString(args, 0, ""), utils.AInt(args, 1, 0), utils.AInt(args, 2, 0), utils.AString(args, 3, ""))
 	},
@@ -171,7 +171,7 @@ var utilsCutByDateCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(5),
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.Logger.Out = ioutil.Discard
+		utils.Logger.Out = io.Discard
 
 		modes.UtilsCutByString(utils.AString(args, 0, ""), utils.AString(args, 1, ""), utils.AString(args, 2, ""), false,
 			utils.AString(args, 5, ""), utils.AString(args, 3, ""), utils.AInt(args, 4, 0))
