@@ -79,7 +79,7 @@ where you can filter and browse well formatted application output.
 			BulkWindowMs:     bulkWindow,
 			ServerPort:       httpPort,
 			ServerIp:         uiIp,
-			HttpPathPrefix:   "log",
+			HttpPathPrefix:   "",
 		}
 
 		http.HandleHttp(config)
