@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -349,12 +350,7 @@ func handleClientPeek(clients *ClientsStruct) func(w http.ResponseWriter, r *htt
 	}
 }
 
-func HandleHttp(config *Config) {
-
-	assets, _ := Assets()
-
-	BULK_WINDOW_MS = config.BulkWindowMs
-
+func normalizeHttpPathPrefix(config *Config) {
 	if len(config.HttpPathPrefix) > 0 && config.HttpPathPrefix[0] != byte('/') {
 		config.HttpPathPrefix = "/" + config.HttpPathPrefix
 	}
@@ -362,6 +358,19 @@ func HandleHttp(config *Config) {
 	if len(config.HttpPathPrefix) == 0 {
 		config.HttpPathPrefix = "/"
 	}
+
+	if strings.LastIndex(config.HttpPathPrefix, "/") != len(config.HttpPathPrefix)-1 {
+		config.HttpPathPrefix = config.HttpPathPrefix + "/"
+	}
+}
+
+func HandleHttp(config *Config) {
+
+	assets, _ := Assets()
+
+	BULK_WINDOW_MS = config.BulkWindowMs
+
+	normalizeHttpPathPrefix(config)
 
 	// Use the file system to serve static files
 	fs := http.FileServer(http.FS(assets))
