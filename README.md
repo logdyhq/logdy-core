@@ -1,4 +1,4 @@
-# Logdy - terminal logs in web browser & Golang logs viewer
+# Logdy - terminal logs in web browser
 
 <p align="center">
 <img src="https://github.com/logdyhq/logdy-core/assets/1653294/9ec8cb3f-0b8f-4523-b600-377444734b9d" height=100/>
