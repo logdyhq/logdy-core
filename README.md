@@ -1,4 +1,4 @@
-# Logdy - terminal logs in web browser
+# Logdy - terminal logs in web browser & Golang logs viewer
 
 <p align="center">
 <img src="https://github.com/logdyhq/logdy-core/assets/1653294/9ec8cb3f-0b8f-4523-b600-377444734b9d" height=100/>
@@ -16,10 +16,27 @@
 
 Logdy is a single-binary that you add to your PATH so it's available just like any other tool: grep, awk, sed, jq. **No installations, no deployments, no compilations**. It works locally, so it's also secure. [Read more](https://logdy.dev/docs/what-is-logdy).
 
+### Standalone use
 ```bash
 # use with any shell command
 $ tail -f file.log | logdy
 INFO[2024-02...] WebUI started, visit http://localhost:8080    port=8080
+```
+
+### Use as a Go library
+```go
+package main
+
+import "github.com/logdyhq/logdy-core/logdy"
+
+func main(){
+  logdyLogger := logdy.InitializeLogdy(logdy.Config{
+    ServerIp:       "127.0.0.1",
+    ServerPort:     "8080",
+  }, nil)
+  logdyLogger.LogString("Log message")
+  <-context.Background().Done()
+}
 ```
 
 ## Demo
@@ -71,12 +88,17 @@ Open the URL Address and start building parsers, columns and filters.
 
 There are multiple other ways you can run Logdy, check the [docs](https://logdy.dev/docs/explanation/command-modes).
 
+## Install Go library
+```bash
+$ go get -u github.com/logdyhq/logdy-core/logdy
+```
+[Read more](https://logdy.dev/docs/golang-logs-viewer) about how to use Logdy embedded into your Go app.
 
 ## Documentation
 
 For product documentation navigate to the [official docs](https://logdy.dev/docs/quick-start).
 
-## Usage
+## CLI Usage
 
 ```bash
 Usage:
