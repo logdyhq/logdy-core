@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -49,7 +50,7 @@ func exampleWithoutWebserver() {
 		}
 	}()
 
-	time.Sleep(3600 * time.Second)
+	<-context.Background().Done()
 }
 
 func exampleWithWebserver() {
