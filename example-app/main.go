@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	logdy "github.com/logdyhq/logdy-core/logdy"
+	"github.com/logdyhq/logdy-core/logdy"
 )
 
 func main() {
