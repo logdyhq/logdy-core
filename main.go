@@ -55,6 +55,10 @@ where you can filter and browse well formatted application output.
 			go modes.ConsumeStdin(http.Ch)
 		}
 
+		if !config.AnalyticsEnabled {
+			utils.Logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
+		}
+
 		http.HandleHttp(config, http.InitializeClients(*config), nil)
 		http.StartWebserver(config)
 	},
@@ -197,10 +201,6 @@ func parseConfig(cmd *cobra.Command) {
 
 	modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 	modes.DisableANSICodeStripping, _ = cmd.Flags().GetBool("disable-ansi-code-stripping")
-
-	if !config.AnalyticsEnabled {
-		utils.Logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
-	}
 }
 
 func init() {
