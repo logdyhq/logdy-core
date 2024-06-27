@@ -18,7 +18,7 @@ func handleConnection(conn net.Conn, ch chan models.Message, port string) {
 
 	// Read lines from the connection and write them to the channel
 	for scanner.Scan() {
-		produce(ch, scanner.Text(), models.MessageTypeStdout, &models.MessageOrigin{Port: port, File: ""})
+		ProduceMessageString(ch, scanner.Text(), models.MessageTypeStdout, &models.MessageOrigin{Port: port, File: ""})
 	}
 }
 

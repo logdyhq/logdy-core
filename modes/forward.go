@@ -50,6 +50,6 @@ func ConsumeStdin(ch chan models.Message) {
 			return
 		}
 
-		produce(ch, string(input), models.MessageTypeStdout, nil)
+		ProduceMessageString(ch, string(input), models.MessageTypeStdout, nil)
 	}
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -19,6 +18,8 @@ import (
 
 var Version = "0.0.0"
 
+var config *http.Config
+
 var rootCmd = &cobra.Command{
 	Use:     "logdy [command]",
 	Short:   "Logdy",
@@ -31,13 +32,10 @@ where you can filter and browse well formatted application output.
 	Run: func(cmd *cobra.Command, args []string) {
 	},
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		parseConfig(cmd)
+
 		verbose, _ := cmd.Flags().GetBool("verbose")
-		if verbose {
-			utils.Logger.SetLevel(logrus.TraceLevel)
-			utils.Logger.Debug("Setting verbose logger")
-		} else {
-			utils.Logger.SetLevel(logrus.InfoLevel)
-		}
+		utils.SetLoggerLevel(verbose)
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		if strings.HasPrefix(cmd.CommandPath(), "logdy completion") ||
@@ -57,32 +55,7 @@ where you can filter and browse well formatted application output.
 			go modes.ConsumeStdin(http.Ch)
 		}
 
-		httpPort, _ := cmd.Flags().GetString("port")
-		uiIp, _ := cmd.Flags().GetString("ui-ip")
-		uiPass, _ := cmd.Flags().GetString("ui-pass")
-		configFile, _ := cmd.Flags().GetString("config")
-		noanalytics, _ := cmd.Flags().GetBool("no-analytics")
-		bulkWindow, _ := cmd.Flags().GetInt64("bulk-window")
-		modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
-		modes.DisableANSICodeStripping, _ = cmd.Flags().GetBool("disable-ansi-code-stripping")
-
-		if !noanalytics {
-			utils.Logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
-		}
-
-		http.InitializeClients(cmd)
-
-		config := &http.Config{
-			AnalyticsEnabled: !noanalytics,
-			UiPass:           uiPass,
-			ConfigFilePath:   configFile,
-			BulkWindowMs:     bulkWindow,
-			ServerPort:       httpPort,
-			ServerIp:         uiIp,
-			HttpPathPrefix:   "",
-		}
-
-		http.HandleHttp(config)
+		http.HandleHttp(config, http.InitializeClients(*config), nil)
 		http.StartWebserver(config)
 	},
 }
@@ -113,7 +86,7 @@ var followCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		http.InitializeClients(cmd)
+		http.InitializeClients(*config)
 		fullRead, _ := cmd.Flags().GetBool("full-read")
 
 		if fullRead {
@@ -147,7 +120,7 @@ var utilsCutByStringCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.Logger.Out = io.Discard
+		utils.SetLoggerDiscard(true)
 		modes.UtilsCutByString(utils.AString(args, 0, ""), utils.AString(args, 1, ""), utils.AString(args, 2, ""),
 			utils.ABool(args, 3, true), utils.AString(args, 4, ""), "", 0)
 	},
@@ -158,7 +131,7 @@ var utilsCutByLineNumberCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.Logger.Out = io.Discard
+		utils.SetLoggerDiscard(true)
 
 		modes.UtilsCutByLineNumber(utils.AString(args, 0, ""), utils.AInt(args, 1, 0), utils.AInt(args, 2, 0), utils.AString(args, 3, ""))
 	},
@@ -170,7 +143,7 @@ var utilsCutByDateCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(5),
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.Logger.Out = io.Discard
+		utils.SetLoggerDiscard(true)
 
 		modes.UtilsCutByString(utils.AString(args, 0, ""), utils.AString(args, 1, ""), utils.AString(args, 2, ""), false,
 			utils.AString(args, 5, ""), utils.AString(args, 3, ""), utils.AInt(args, 4, 0))
@@ -205,6 +178,29 @@ var demoSocketCmd = &cobra.Command{
 
 		go modes.GenerateRandomData(produceJson, num, http.Ch, context.Background())
 	},
+}
+
+func parseConfig(cmd *cobra.Command) {
+	config = &http.Config{
+		HttpPathPrefix: "",
+	}
+
+	config.ServerPort, _ = cmd.Flags().GetString("port")
+	config.ServerIp, _ = cmd.Flags().GetString("ui-ip")
+	config.UiPass, _ = cmd.Flags().GetString("ui-pass")
+	config.ConfigFilePath, _ = cmd.Flags().GetString("config")
+	config.BulkWindowMs, _ = cmd.Flags().GetInt64("bulk-window")
+	config.AppendToFile, _ = cmd.Flags().GetString("append-to-file")
+	config.AppendToFileRaw, _ = cmd.Flags().GetBool("append-to-file-raw")
+	config.MaxMessageCount, _ = cmd.Flags().GetInt64("max-message-count")
+	config.AnalyticsEnabled, _ = cmd.Flags().GetBool("no-analytics")
+
+	modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
+	modes.DisableANSICodeStripping, _ = cmd.Flags().GetBool("disable-ansi-code-stripping")
+
+	if !config.AnalyticsEnabled {
+		utils.Logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
+	}
 }
 
 func init() {
@@ -242,10 +238,11 @@ func init() {
 
 	followCmd.Flags().BoolP("full-read", "", false, "Whether the the file(s) should be read entirely")
 	rootCmd.AddCommand(followCmd)
+
 }
 
 func main() {
-	utils.Logger.Out = os.Stdout
+	utils.SetLoggerDiscard(false)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

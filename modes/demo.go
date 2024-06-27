@@ -67,7 +67,7 @@ func GenerateRandomData(jsonFormat bool, numPerSec int, ch chan models.Message, 
 			mo.Port = ""
 		}
 
-		produce(ch, msg, models.MessageTypeStdout, &mo)
+		ProduceMessageString(ch, msg, models.MessageTypeStdout, &mo)
 		time.Sleep(time.Duration((1 / float64(numPerSec)) * float64(time.Second)))
 	}
 

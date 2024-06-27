@@ -7,13 +7,12 @@ import (
 	"github.com/logdyhq/logdy-core/models"
 	"github.com/logdyhq/logdy-core/ring"
 	"github.com/logdyhq/logdy-core/utils"
-	"github.com/spf13/cobra"
 
 	. "github.com/logdyhq/logdy-core/models"
 )
 
-var clients *ClientsStruct
 var Ch chan models.Message
+var Clients *ClientsStruct
 
 var BULK_WINDOW_MS int64 = 100
 var FLUSH_BUFFER_SIZE = 1000
@@ -129,6 +128,10 @@ type ClientsStruct struct {
 }
 
 func NewClients(msgs <-chan Message, maxCount int64) *ClientsStruct {
+	if maxCount == 0 {
+		maxCount = 100_000
+	}
+
 	cls := &ClientsStruct{
 		mu:                 sync.Mutex{},
 		mainChan:           msgs,
@@ -331,16 +334,20 @@ func (c *ClientsStruct) Close(id string) {
 }
 
 func InitChannel() {
+	if Ch != nil {
+		return
+	}
+
 	Ch = make(chan models.Message, 1000)
 }
 
-func InitializeClients(cmd *cobra.Command) {
-	if clients != nil {
-		return
+func InitializeClients(config Config) *ClientsStruct {
+	if Clients != nil {
+		return Clients
 	}
-	appendToFile, _ := cmd.Flags().GetString("append-to-file")
-	appendToFileRaw, _ := cmd.Flags().GetBool("append-to-file-raw")
-	maxMessageCount, _ := cmd.Flags().GetInt64("max-message-count")
-	mainChan := utils.ProcessIncomingMessages(Ch, appendToFile, appendToFileRaw)
-	clients = NewClients(mainChan, maxMessageCount)
+
+	mainChan := utils.ProcessIncomingMessages(Ch, config.AppendToFile, config.AppendToFileRaw)
+	Clients = NewClients(mainChan, config.MaxMessageCount)
+
+	return Clients
 }

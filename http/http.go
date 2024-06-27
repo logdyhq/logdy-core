@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -62,6 +61,7 @@ func handleStatus(config *Config) func(w http.ResponseWriter, r *http.Request) {
 			ApiPrefix:        config.HttpPathPrefix,
 		})
 
+		w.Header().Add("content-type", "application/json")
 		w.Write(initMsg)
 	}
 }
@@ -124,7 +124,7 @@ func handleWs(uiPass string, clients *ClientsStruct) func(w http.ResponseWriter,
 			for {
 				time.Sleep(1 * time.Second)
 				_, _, err := conn.ReadMessage()
-				log.Println("ERROR", err)
+				utils.Logger.Error(err)
 				if err != nil {
 					utils.Logger.Debug(err)
 					utils.Logger.WithField("client_id", clientId).Info("Closed client")
@@ -364,27 +364,43 @@ func normalizeHttpPathPrefix(config *Config) {
 	}
 }
 
-func HandleHttp(config *Config) {
+type hand interface {
+	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
+	Handle(pattern string, handler http.Handler)
+}
+
+func HandleHttp(config *Config, clients *ClientsStruct, serveMux hand) {
 
 	assets, _ := Assets()
 
-	BULK_WINDOW_MS = config.BulkWindowMs
+	if config.BulkWindowMs > 0 {
+		BULK_WINDOW_MS = config.BulkWindowMs
+	} else {
+		BULK_WINDOW_MS = 100
+	}
 
 	normalizeHttpPathPrefix(config)
 
 	// Use the file system to serve static files
 	fs := http.FileServer(http.FS(assets))
 
-	http.Handle(config.HttpPathPrefix, http.StripPrefix(config.HttpPathPrefix, fs))
-
-	http.HandleFunc(config.HttpPathPrefix+"api/check-pass", handleCheckPass(config.UiPass))
-	http.HandleFunc(config.HttpPathPrefix+"api/status", handleStatus(config))
-	http.HandleFunc(config.HttpPathPrefix+"api/client/set-status", handleClientStatus(clients))
-	http.HandleFunc(config.HttpPathPrefix+"api/client/load", handleClientLoad(clients))
-	http.HandleFunc(config.HttpPathPrefix+"api/client/peek-log", handleClientPeek(clients))
-
-	// Listen for WebSocket connections on port 8080.
-	http.HandleFunc(config.HttpPathPrefix+"ws", handleWs(config.UiPass, clients))
+	if serveMux == nil {
+		http.Handle(config.HttpPathPrefix, http.StripPrefix(config.HttpPathPrefix, fs))
+		http.HandleFunc(config.HttpPathPrefix+"api/check-pass", handleCheckPass(config.UiPass))
+		http.HandleFunc(config.HttpPathPrefix+"api/status", handleStatus(config))
+		http.HandleFunc(config.HttpPathPrefix+"api/client/set-status", handleClientStatus(clients))
+		http.HandleFunc(config.HttpPathPrefix+"api/client/load", handleClientLoad(clients))
+		http.HandleFunc(config.HttpPathPrefix+"api/client/peek-log", handleClientPeek(clients))
+		http.HandleFunc(config.HttpPathPrefix+"ws", handleWs(config.UiPass, clients))
+	} else {
+		serveMux.Handle(config.HttpPathPrefix, http.StripPrefix(config.HttpPathPrefix, fs))
+		serveMux.HandleFunc(config.HttpPathPrefix+"api/check-pass", handleCheckPass(config.UiPass))
+		serveMux.HandleFunc(config.HttpPathPrefix+"api/status", handleStatus(config))
+		serveMux.HandleFunc(config.HttpPathPrefix+"api/client/set-status", handleClientStatus(clients))
+		serveMux.HandleFunc(config.HttpPathPrefix+"api/client/load", handleClientLoad(clients))
+		serveMux.HandleFunc(config.HttpPathPrefix+"api/client/peek-log", handleClientPeek(clients))
+		serveMux.HandleFunc(config.HttpPathPrefix+"ws", handleWs(config.UiPass, clients))
+	}
 
 }
 
@@ -406,14 +422,14 @@ type Config struct {
 	ConfigFilePath   string
 	BulkWindowMs     int64
 	HttpPathPrefix   string
-	ServerPort       string
-	ServerIp         string
-}
 
-func HandleHttpAndServe(config Config) {
-	HandleHttp(&config)
+	ServerPort string
+	ServerIp   string
 
-	if config.ServerPort != "" && config.ServerIp != "" {
-		StartWebserver(&config)
-	}
+	AppendToFile    string
+	AppendToFileRaw bool
+	MaxMessageCount int64
+
+	LogLevel       utils.LOG_LEVEL
+	LogInterceptor utils.LogInterceptor
 }

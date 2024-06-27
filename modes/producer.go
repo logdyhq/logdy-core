@@ -16,7 +16,7 @@ import (
 var FallthroughGlobal = false
 var DisableANSICodeStripping = false
 
-func produce(ch chan models.Message, line string, mt models.LogType, mo *models.MessageOrigin) {
+func ProduceMessageString(ch chan models.Message, line string, mt models.LogType, mo *models.MessageOrigin) {
 
 	if !DisableANSICodeStripping {
 		line = utils.StripAnsi(line)

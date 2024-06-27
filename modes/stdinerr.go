@@ -12,7 +12,7 @@ import (
 func readOutput(reader io.Reader, outputCh chan models.Message, messageType models.LogType) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
-		produce(outputCh, scanner.Text(), messageType, nil)
+		ProduceMessageString(outputCh, scanner.Text(), messageType, nil)
 	}
 }
 

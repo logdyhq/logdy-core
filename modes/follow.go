@@ -39,7 +39,7 @@ func FollowFiles(ch chan models.Message, files []string) {
 			}
 
 			for line := range t.Lines {
-				produce(ch, line.Text, models.MessageTypeStdout, &models.MessageOrigin{File: file})
+				ProduceMessageString(ch, line.Text, models.MessageTypeStdout, &models.MessageOrigin{File: file})
 			}
 
 		}(file)
@@ -66,7 +66,7 @@ func ReadFiles(ch chan models.Message, files []string) {
 		}).Info("Reading file")
 
 		utils.LineCounterWithChannel(r, func(line utils.Line, cancel func()) {
-			produce(ch, string(line.Line), models.MessageTypeStdout, &models.MessageOrigin{File: file})
+			ProduceMessageString(ch, string(line.Line), models.MessageTypeStdout, &models.MessageOrigin{File: file})
 		})
 		bar.Finish()
 
