@@ -66,7 +66,7 @@ func exampleWithWebserver() {
 
 	logger = logdy.InitializeLogdy(logdy.Config{
 		HttpPathPrefix: "/_logdy-ui",
-		LogLevel:       logdy.LOG_LEVEL_VERBOSE,
+		LogLevel:       logdy.LOG_LEVEL_NORMAL,
 	}, nil)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))

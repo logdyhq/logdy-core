@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -384,7 +385,8 @@ func HandleHttp(config *Config, clients *ClientsStruct, serveMux hand) {
 	// Use the file system to serve static files
 	fs := http.FileServer(http.FS(assets))
 
-	if serveMux == nil {
+	if reflect.ValueOf(serveMux).IsNil() {
+		utils.Logger.Debug("Using net/http")
 		http.Handle(config.HttpPathPrefix, http.StripPrefix(config.HttpPathPrefix, fs))
 		http.HandleFunc(config.HttpPathPrefix+"api/check-pass", handleCheckPass(config.UiPass))
 		http.HandleFunc(config.HttpPathPrefix+"api/status", handleStatus(config))
@@ -393,6 +395,7 @@ func HandleHttp(config *Config, clients *ClientsStruct, serveMux hand) {
 		http.HandleFunc(config.HttpPathPrefix+"api/client/peek-log", handleClientPeek(clients))
 		http.HandleFunc(config.HttpPathPrefix+"ws", handleWs(config.UiPass, clients))
 	} else {
+		utils.Logger.Debug("Using serveMux", serveMux)
 		serveMux.Handle(config.HttpPathPrefix, http.StripPrefix(config.HttpPathPrefix, fs))
 		serveMux.HandleFunc(config.HttpPathPrefix+"api/check-pass", handleCheckPass(config.UiPass))
 		serveMux.HandleFunc(config.HttpPathPrefix+"api/status", handleStatus(config))
@@ -405,6 +408,7 @@ func HandleHttp(config *Config, clients *ClientsStruct, serveMux hand) {
 }
 
 func StartWebserver(config *Config) {
+	utils.Logger.Debug("Starting webserver")
 	utils.Logger.WithFields(logrus.Fields{
 		"port": config.ServerPort,
 	}).Info("WebUI started, visit http://" + config.ServerIp + ":" + config.ServerPort + config.HttpPathPrefix)
