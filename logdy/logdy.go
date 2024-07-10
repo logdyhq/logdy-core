@@ -40,6 +40,9 @@ type Config struct {
 	// A function to be invoked when a Logdy internal log message is produced
 	// If not nil then LogLevel is ignored
 	LogInterceptor LogInterceptor
+
+	// Key to be used when communicating with the REST API
+	ApiKey string
 }
 
 type LOG_LEVEL = utils.LOG_LEVEL
@@ -93,6 +96,7 @@ func translateToConfig(c *Config) http.Config {
 		MaxMessageCount:  c.MaxMessageCount,
 		LogLevel:         c.LogLevel,
 		LogInterceptor:   c.LogInterceptor,
+		ApiKey:           c.ApiKey,
 	}
 }
 

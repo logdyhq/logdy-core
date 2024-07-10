@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"reflect"
@@ -44,6 +45,14 @@ func getClientOrErr(r *http.Request, w http.ResponseWriter, clients *ClientsStru
 	}
 
 	return cl
+}
+
+func httpError(err string, w http.ResponseWriter, status int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(map[string]string{
+		"error": err,
+	})
 }
 
 func normalizeHttpPathPrefix(config *Config) {

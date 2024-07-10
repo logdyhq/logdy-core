@@ -18,30 +18,30 @@ func TestApiKeyMiddleware(t *testing.T) {
 		{
 			name:           "Valid API Key",
 			apiKey:         "valid-key",
-			headerKey:      "valid-key",
+			headerKey:      "Bearer valid-key",
 			expectedStatus: http.StatusOK,
 			expectedBody:   nil,
 		},
 		{
 			name:           "Invalid API Key",
 			apiKey:         "valid-key",
-			headerKey:      "invalid-key",
+			headerKey:      "Bearer invalid-key",
 			expectedStatus: http.StatusUnauthorized,
 			expectedBody:   map[string]string{"error": "Invalid api key"},
 		},
 		{
-			name:           "Missing API Key",
+			name:           "Invalid API Key",
 			apiKey:         "valid-key",
-			headerKey:      "",
-			expectedStatus: http.StatusUnauthorized,
-			expectedBody:   map[string]string{"error": "Missing '" + API_KEY_HEADER_NAME + "' header with the api key"},
+			headerKey:      "valid-key",
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   map[string]string{"error": "The Authorization token should be prefixed with `Bearer`"},
 		},
 		{
 			name:           "No API Key Set",
 			apiKey:         "",
-			headerKey:      "",
+			headerKey:      "Bearer ",
 			expectedStatus: http.StatusUnauthorized,
-			expectedBody:   map[string]string{"error": "Api key not set in the headers (" + API_KEY_HEADER_NAME + ")"},
+			expectedBody:   map[string]string{"error": "Configure api key to access this endpoint"},
 		},
 	}
 

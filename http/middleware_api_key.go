@@ -1,43 +1,36 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/logdyhq/logdy-core/utils"
 )
 
-const API_KEY_HEADER_NAME = "logdy-api-key"
+const API_KEY_HEADER_NAME = "Authorization"
 
 func apiKeyMiddleware(apiKey string, f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if apiKey == "" {
+			httpError("Configure api key to access this endpoint", w, http.StatusUnauthorized)
+			return
+		}
 
 		key := r.Header.Get(API_KEY_HEADER_NAME)
 
-		if apiKey == "" {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "Api key not set in the headers (" + API_KEY_HEADER_NAME + ")",
-			})
+		if !strings.HasPrefix(key, "Bearer ") {
+			httpError("The Authorization token should be prefixed with `Bearer`", w, http.StatusBadRequest)
 			return
 		}
 
-		if apiKey != "" && key == "" {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "Missing '" + API_KEY_HEADER_NAME + "' header with the api key",
-			})
+		if key == "" {
+			httpError("Missing '"+API_KEY_HEADER_NAME+"' header with the api key", w, http.StatusUnauthorized)
 			return
 		}
 
-		if apiKey != "" && apiKey != key {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "Invalid api key",
-			})
+		key, _ = strings.CutPrefix(key, "Bearer ")
+		if apiKey != key {
+			httpError("Invalid api key", w, http.StatusUnauthorized)
 			return
 		}
 

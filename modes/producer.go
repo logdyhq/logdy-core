@@ -16,7 +16,7 @@ import (
 var FallthroughGlobal = false
 var DisableANSICodeStripping = false
 
-func ProduceMessageString(ch chan models.Message, line string, mt models.LogType, mo *models.MessageOrigin) {
+func ProduceMessageStringTimestamped(ch chan models.Message, line string, mt models.LogType, mo *models.MessageOrigin, ts time.Time) {
 
 	if !DisableANSICodeStripping {
 		line = utils.StripAnsi(line)
@@ -59,6 +59,10 @@ func ProduceMessageString(ch chan models.Message, line string, mt models.LogType
 		IsJson:      validJson == nil,
 		BaseMessage: models.BaseMessage{MessageType: "log"},
 		Origin:      mo,
-		Ts:          time.Now().UnixMilli(),
+		Ts:          ts.UnixMilli(),
 	}
+}
+
+func ProduceMessageString(ch chan models.Message, line string, mt models.LogType, mo *models.MessageOrigin) {
+	ProduceMessageStringTimestamped(ch, line, mt, mo, time.Now())
 }
