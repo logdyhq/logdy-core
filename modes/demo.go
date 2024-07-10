@@ -57,14 +57,18 @@ func GenerateRandomData(jsonFormat bool, numPerSec int, ch chan models.Message, 
 
 		mo := models.MessageOrigin{}
 
-		if rand.Intn(100) >= 50 {
+		chance := rand.Intn(100)
+		if chance >= 60 {
 			mo.File = utils.PickRandom[string]([]string{"foo1.log", "foo2.log", "foo3.log"})
+		} else if chance >= 30 {
+			mo.ApiSource = utils.PickRandom[string]([]string{"machine1", "machine2", "machine3"})
 		} else {
 			mo.Port = utils.PickRandom[string]([]string{"4356", "4333", "4262"})
 		}
-		if rand.Intn(100) >= 90 {
+		if chance >= 90 {
 			mo.File = ""
 			mo.Port = ""
+			mo.ApiSource = ""
 		}
 
 		ProduceMessageString(ch, msg, models.MessageTypeStdout, &mo)

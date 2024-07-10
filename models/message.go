@@ -9,13 +9,14 @@ const MessageTypeStderr LogType = 2
 
 const MessageTypeInit string = "init"
 const MessageTypeLogBulk string = "log_bulk"
-const MessageTypeLogSingle string = "log_sinlge"
+const MessageTypeLogSingle string = "log_single"
 const MessageTypeClientJoined string = "client_joined"
 const MessageTypeClientMsgStatus string = "client_msg_status"
 
 type MessageOrigin struct {
-	Port string `json:"port"`
-	File string `json:"file"`
+	Port      string `json:"port"`
+	File      string `json:"file"`
+	ApiSource string `json:"api_source"`
 }
 
 type Message struct {
