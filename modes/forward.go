@@ -22,7 +22,14 @@ func ConsumeStdinAndForwardToPort(ip string, port string) {
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		input, _, err := reader.ReadLine()
+		var input []byte
+		moreInput, isPrefix, err := reader.ReadLine()
+		input = append(input, moreInput...)
+		for isPrefix {
+			var moreInput []byte
+			moreInput, isPrefix, _ = reader.ReadLine()
+			input = append(input, moreInput...)
+		}
 		utils.Logger.WithField("line", string(input)).Debug("Stdin line received")
 		if err != nil {
 			utils.Logger.Error("could not process input", err)
@@ -37,7 +44,9 @@ func ConsumeStdin(ch chan models.Message) {
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		input, isPrefix, err := reader.ReadLine()
+		var input []byte
+		moreInput, isPrefix, err := reader.ReadLine()
+		input = append(input, moreInput...)
 		for isPrefix {
 			var moreInput []byte
 			moreInput, isPrefix, _ = reader.ReadLine()
