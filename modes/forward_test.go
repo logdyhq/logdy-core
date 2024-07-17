@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 
@@ -62,6 +63,54 @@ func TestConsumeStdinAndForwardToPort(t *testing.T) {
 	assert.Equal(t, msgReceived[1], "lineB")
 }
 
+func TestConsumeStdinAndForwardToPortLong(t *testing.T) {
+	msgReceived := []string{}
+	wg := sync.WaitGroup{}
+	wgServer := sync.WaitGroup{}
+	wg.Add(1)
+	wgServer.Add(1)
+	go func() {
+		l, err := net.Listen("tcp", ":8124")
+		if err != nil {
+			panic(err)
+		}
+		defer l.Close()
+		wgServer.Done()
+
+		conn, err := l.Accept()
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+
+		scanner := bufio.NewScanner(conn)
+		scanner.Scan()
+		msgReceived = append(msgReceived, scanner.Text())
+		wg.Done()
+	}()
+
+	userInput := "b" + strings.Repeat("a", 9999)
+
+	funcDefer, err := mockStdin(t, userInput)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer funcDefer()
+
+	wgServer.Wait()
+	ConsumeStdinAndForwardToPort("", "8124")
+
+	wg.Wait()
+
+	assert.Equal(t, len(msgReceived), 1)
+	if !assert.Equal(t, len(msgReceived[0]), len(userInput)) {
+		return
+	}
+	assert.Equal(t, userInput, msgReceived[0])
+}
+
 func TestConsumeStdin(t *testing.T) {
 	userInput := "line1\nline2"
 
@@ -89,6 +138,26 @@ func TestConsumeStdin(t *testing.T) {
 	}
 
 	assert.Equal(t, 2, i)
+}
+
+func TestConsumeStdinLong(t *testing.T) {
+	userInput := "b" + strings.Repeat("a", 9999)
+
+	funcDefer, err := mockStdin(t, userInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer funcDefer()
+
+	ch := make(chan Message, 10)
+	go ConsumeStdin(ch)
+
+	msg := <-ch
+	if !assert.Equal(t, len(userInput), len(msg.Content)) {
+		return
+	}
+	assert.Equal(t, userInput, msg.Content)
 }
 
 func mockStdin(t *testing.T, dummyInput string) (funcDefer func(), err error) {
