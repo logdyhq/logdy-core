@@ -58,10 +58,16 @@ func readFullLine(reader *bufio.Reader) ([]byte, error) {
 	var input []byte
 	moreInput, isPrefix, err := reader.ReadLine()
 	input = append(input, moreInput...)
+	if err != nil {
+		return input, err
+	}
 	for isPrefix {
 		var moreInput []byte
-		moreInput, isPrefix, _ = reader.ReadLine()
+		moreInput, isPrefix, err = reader.ReadLine()
 		input = append(input, moreInput...)
+		if err != nil {
+			return input, err
+		}
 	}
 	return input, err
 }
