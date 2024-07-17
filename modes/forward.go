@@ -37,7 +37,12 @@ func ConsumeStdin(ch chan models.Message) {
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		input, _, err := reader.ReadLine()
+		input, isPrefix, err := reader.ReadLine()
+		for isPrefix {
+			var moreInput []byte
+			moreInput, isPrefix, _ = reader.ReadLine()
+			input = append(input, moreInput...)
+		}
 		utils.Logger.WithField("line", string(input)).Debug("Stdin line received")
 
 		if err == io.EOF {

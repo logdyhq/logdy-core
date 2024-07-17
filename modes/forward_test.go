@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 
@@ -89,6 +90,26 @@ func TestConsumeStdin(t *testing.T) {
 	}
 
 	assert.Equal(t, 2, i)
+}
+
+func TestConsumeStdinLong(t *testing.T) {
+	userInput := strings.Repeat("a", 10000)
+
+	funcDefer, err := mockStdin(t, userInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer funcDefer()
+
+	ch := make(chan Message, 10)
+	go ConsumeStdin(ch)
+
+	msg := <-ch
+	if !assert.Equal(t, len(userInput), len(msg.Content)) {
+		return
+	}
+	assert.Equal(t, userInput, msg.Content)
 }
 
 func mockStdin(t *testing.T, dummyInput string) (funcDefer func(), err error) {
