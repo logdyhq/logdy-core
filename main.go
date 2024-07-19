@@ -37,31 +37,6 @@ where you can filter and browse well formatted application output.
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		utils.SetLoggerLevel(verbose)
 	},
-	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		if strings.HasPrefix(cmd.CommandPath(), "logdy completion") ||
-			strings.HasPrefix(cmd.CommandPath(), "logdy utils") {
-			// if logdy completion command is run, dont start websever, just
-			// exit the process
-			os.Exit(0)
-		}
-
-		noupdates, _ := cmd.Flags().GetBool("no-updates")
-		if !noupdates && Version != "0.0.0" {
-			go utils.CheckUpdatesAndPrintInfo(Version)
-		}
-
-		if len(args) == 0 {
-			utils.Logger.Info("Listen to stdin (from pipe)")
-			go modes.ConsumeStdin(http.Ch)
-		}
-
-		if !config.AnalyticsEnabled {
-			utils.Logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
-		}
-
-		http.HandleHttp(config, http.InitializeClients(*config), nil)
-		http.StartWebserver(config)
-	},
 }
 
 var listenStdCmd = &cobra.Command{
@@ -82,6 +57,9 @@ var listenStdCmd = &cobra.Command{
 		arg := strings.Split(args[0], " ")
 		modes.StartCmd(http.Ch, arg[0], arg[1:])
 	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		startWebServer(cmd, args)
+	},
 }
 
 var followCmd = &cobra.Command{
@@ -98,6 +76,9 @@ var followCmd = &cobra.Command{
 		}
 
 		modes.FollowFiles(http.Ch, args)
+	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		startWebServer(cmd, args)
 	},
 }
 
@@ -163,6 +144,9 @@ var listenSocketCmd = &cobra.Command{
 		ip, _ := cmd.Flags().GetString("ip")
 		go modes.StartSocketServers(http.Ch, ip, args)
 	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		startWebServer(cmd, args)
+	},
 }
 
 var demoSocketCmd = &cobra.Command{
@@ -182,6 +166,25 @@ var demoSocketCmd = &cobra.Command{
 
 		go modes.GenerateRandomData(produceJson, num, http.Ch, context.Background())
 	},
+}
+
+func startWebServer(cmd *cobra.Command, args []string) {
+	noupdates, _ := cmd.Flags().GetBool("no-updates")
+	if !noupdates && Version != "0.0.0" {
+		go utils.CheckUpdatesAndPrintInfo(Version)
+	}
+
+	if len(args) == 0 {
+		utils.Logger.Info("Listen to stdin (from pipe)")
+		go modes.ConsumeStdin(http.Ch)
+	}
+
+	if !config.AnalyticsEnabled {
+		utils.Logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
+	}
+
+	http.HandleHttp(config, http.InitializeClients(*config), nil)
+	http.StartWebserver(config)
 }
 
 func parseConfig(cmd *cobra.Command) {
