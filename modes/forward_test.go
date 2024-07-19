@@ -115,7 +115,7 @@ func TestConsumeStdinAndForwardToPortLong(t *testing.T) {
 }
 
 func TestConsumeStdinAndForwardToPortEofLine(t *testing.T) {
-	stubLoggerOut := StubWriter{
+	stubLoggerOut := StubLoggingWriter{
 		outputs1: []int{0},
 		outputs2: []error{nil},
 	}
@@ -246,16 +246,16 @@ func mockStdin(t *testing.T, dummyInput string) (funcDefer func(), err error) {
 	}, nil
 }
 
-type StubWriter struct {
+type StubLoggingWriter struct {
 	inputs      [][]byte
 	outputs1    []int
 	outputs2    []error
 	timesCalled int
 }
 
-var _ io.Writer = (*StubWriter)(nil)
+var _ io.Writer = (*StubLoggingWriter)(nil)
 
-func (s *StubWriter) Write(b []byte) (n int, err error) {
+func (s *StubLoggingWriter) Write(b []byte) (n int, err error) {
 	s.inputs = append(s.inputs, b)
 	idx := min(len(s.outputs1)-1, len(s.outputs2)-1, s.timesCalled)
 	n = s.outputs1[idx]
@@ -264,7 +264,7 @@ func (s *StubWriter) Write(b []byte) (n int, err error) {
 	return n, err
 }
 
-func (s *StubWriter) InputFieldsAsStrings(t *testing.T, fieldName string) []string {
+func (s *StubLoggingWriter) InputFieldsAsStrings(t *testing.T, fieldName string) []string {
 	t.Helper()
 	var messages []string
 	for _, v := range s.inputs {
