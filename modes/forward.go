@@ -24,12 +24,18 @@ func ConsumeStdinAndForwardToPort(ip string, port string) {
 	for {
 		input, err := readFullLine(reader)
 		utils.Logger.WithField("line", string(input)).Debug("Stdin line received")
-		if err != nil {
+		if err != nil && err != io.EOF {
 			utils.Logger.Error("could not process input", err)
 			return
 		}
 
-		fmt.Fprint(connClient, string(input)+"\n")
+		if len(input) != 0 {
+			fmt.Fprint(connClient, string(input)+"\n")
+		}
+
+		if err == io.EOF {
+			return
+		}
 	}
 }
 
