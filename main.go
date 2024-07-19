@@ -166,6 +166,9 @@ var demoSocketCmd = &cobra.Command{
 
 		go modes.GenerateRandomData(produceJson, num, http.Ch, context.Background())
 	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		startWebServer(cmd, args)
+	},
 }
 
 func startWebServer(cmd *cobra.Command, args []string) {
