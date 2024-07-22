@@ -2,13 +2,16 @@ package modes
 
 import (
 	"bufio"
+	"io"
 	"net"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
 
 	. "github.com/logdyhq/logdy-core/models"
+	"github.com/logdyhq/logdy-core/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -111,6 +114,59 @@ func TestConsumeStdinAndForwardToPortLong(t *testing.T) {
 	assert.Equal(t, userInput, msgReceived[0])
 }
 
+func TestConsumeStdinAndForwardToPortEofLine(t *testing.T) {
+	stubLoggerOut := StubLoggingWriter{
+		outputs1: []int{0},
+		outputs2: []error{nil},
+	}
+	oldLoggerOut := utils.Logger.Out
+	utils.Logger.Out = &stubLoggerOut
+	defer func() { utils.Logger.Out = oldLoggerOut }()
+
+	msgReceived := ""
+	wg := sync.WaitGroup{}
+	wgServer := sync.WaitGroup{}
+	wg.Add(1)
+	wgServer.Add(1)
+	go func() {
+		l, err := net.Listen("tcp", ":8124")
+		if err != nil {
+			panic(err)
+		}
+		defer l.Close()
+		wgServer.Done()
+
+		conn, err := l.Accept()
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+
+		scanner := bufio.NewScanner(conn)
+		scanner.Scan()
+		msgReceived = scanner.Text()
+		wg.Done()
+	}()
+
+	userInput := "11111"
+
+	funcStdinDefer, err := mockStdin(t, userInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer funcStdinDefer()
+
+	wgServer.Wait()
+	ConsumeStdinAndForwardToPort("", "8124")
+	wg.Wait()
+
+	if !assert.Equal(t, userInput, msgReceived) {
+		return
+	}
+	messages := stubLoggerOut.InputFieldsAsStrings(t, "msg")
+	assert.Equal(t, []string{`"Accept stdin and forward to port"`}, messages)
+}
+
 func TestConsumeStdin(t *testing.T) {
 	userInput := "line1\nline2"
 
@@ -188,4 +244,54 @@ func mockStdin(t *testing.T, dummyInput string) (funcDefer func(), err error) {
 		os.Stdin = oldOsStdin
 		os.Remove(tmpfile.Name())
 	}, nil
+}
+
+type StubLoggingWriter struct {
+	inputs      [][]byte
+	outputs1    []int
+	outputs2    []error
+	timesCalled int
+}
+
+var _ io.Writer = (*StubLoggingWriter)(nil)
+
+func (s *StubLoggingWriter) Write(b []byte) (n int, err error) {
+	s.inputs = append(s.inputs, b)
+	idx := min(len(s.outputs1)-1, len(s.outputs2)-1, s.timesCalled)
+	n = s.outputs1[idx]
+	err = s.outputs2[idx]
+	s.timesCalled++
+	return n, err
+}
+
+func (s *StubLoggingWriter) InputFieldsAsStrings(t *testing.T, fieldName string) []string {
+	t.Helper()
+	var messages []string
+	for _, v := range s.inputs {
+		message := loggingValue(t, string(v), fieldName)
+		messages = append(messages, message)
+	}
+	return messages
+}
+
+func loggingValue(t *testing.T, logEntry string, field string) string {
+	t.Helper()
+	if logEntry[len(logEntry)-1] == '\n' {
+		logEntry = logEntry[0 : len(logEntry)-1]
+	}
+	r, err := regexp.Compile(`[a-zA-Z]+=(?:[a-zA-Z0-9]+|(?:\"[\w\s:\.]+\"))`)
+	if err != nil {
+		t.Fatalf("failed to compile regex: %v", err)
+	}
+	entries := r.FindAll(([]byte)(logEntry), -1)
+	for _, v := range entries {
+		equalsIndex := strings.Index(string(v), "=")
+		key := string(v[0:equalsIndex])
+		value := string(v[equalsIndex+1:])
+		if key == field {
+			return value
+		}
+	}
+	t.Fatalf("expected logging field to have key %v but was not found", field)
+	return ""
 }
