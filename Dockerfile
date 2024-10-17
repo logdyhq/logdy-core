@@ -1,5 +1,10 @@
-## -*- dockerfile-image-name: "logdy-core" -*-
+# syntax=docker/dockerfile:1
+
 FROM golang:1
+
+# For available labels, see OCI Annotations Spec docs:
+# https://specs.opencontainers.org/image-spec/annotations/#pre-defined-annotation-keys
+LABEL org.opencontainers.image.source="https://github.com/logdyhq/logdy-core"
 
 WORKDIR /go/src/logdy-core/
 COPY ./ /go/src/logdy-core/
