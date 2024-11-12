@@ -102,17 +102,10 @@ func translateToConfig(c *Config) http.Config {
 
 func InitializeLogdy(config Config, serveMux *_http.ServeMux) Logdy {
 	utils.InitLogger()
-
-	switch config.LogLevel {
-	case LOG_LEVEL_SILENT:
-		utils.SetLoggerDiscard(true)
-	case LOG_LEVEL_NORMAL:
-		utils.SetLoggerDiscard(false)
-		utils.SetLoggerLevel(false)
-	case LOG_LEVEL_VERBOSE:
-		utils.SetLoggerDiscard(false)
-		utils.SetLoggerLevel(true)
-	}
+	
+	// Configure logger based on log level
+	utils.SetLoggerDiscard(config.LogLevel == LOG_LEVEL_SILENT)
+	utils.SetLoggerLevel(config.LogLevel == LOG_LEVEL_VERBOSE)
 
 	if config.LogInterceptor != nil {
 		utils.SetLoggerInterceptor(config.LogInterceptor)
