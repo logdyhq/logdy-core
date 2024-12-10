@@ -9,7 +9,10 @@
 <a href="https://demo.logdy.dev">Demo</a> | 
 <a href="https://logdy.dev/docs/quick-start">Docs</a> | 
 <a href="https://github.com/logdyhq/logdy-core/releases">Download</a> | 
-<a href="https://logdy.dev/blog">Blog</a></strong>
+<a href="https://logdy.dev/blog">Blog</a> | </strong> 
+<a href="https://github.com/logdyhq/logdy-core/actions/workflows/test.yml">
+  <img src="https://github.com/logdyhq/logdy-core/actions/workflows/test.yml/badge.svg"/>
+</a>
 </p>
 
 ### Latest version: 0.13.2 (26 November 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v013)
