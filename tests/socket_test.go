@@ -19,11 +19,12 @@ func TestLogdyE2E_Socket(t *testing.T) {
 
 	// Setup wait group for message sending
 	var wg sync.WaitGroup
+	var wgReady sync.WaitGroup
+	wgReady.Add(1)
 	wg.Add(3) // Expect 3 messages (1 from each port)
 
 	// Start logdy process with -t flag for stdout output
 	cmd := exec.Command("go", "run", "../main.go", "socket", "-t", "8475", "8476", "8477")
-
 	// Get stdout pipe for verifying messages
 	stdout, err := cmd.StdoutPipe()
 	assert.NoError(t, err)
@@ -33,6 +34,9 @@ func TestLogdyE2E_Socket(t *testing.T) {
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
 			line := scanner.Text()
+			if strings.Contains(line, `WebUI started`) {
+				wgReady.Done()
+			}
 			select {
 			case msgChan <- line:
 				// Message sent to channel
@@ -47,7 +51,8 @@ func TestLogdyE2E_Socket(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Give the process more time to start up and initialize all socket servers
-	time.Sleep(2 * time.Second)
+	wgReady.Wait()
+	time.Sleep(1 * time.Second)
 
 	// Send test messages to each port
 	ports := []string{"8475", "8476", "8477"}
@@ -59,7 +64,7 @@ func TestLogdyE2E_Socket(t *testing.T) {
 			if err == nil {
 				break
 			}
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(1 * time.Millisecond)
 		}
 		assert.NoError(t, err, "Failed to connect to port %s after retries", port)
 
