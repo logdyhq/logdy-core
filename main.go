@@ -37,6 +37,14 @@ where you can filter and browse well formatted application output.
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		utils.SetLoggerLevel(verbose)
 	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		// by default, `stdin` mode will run if [command] is not provided
+		if len(args) == 0 {
+			utils.Logger.Info("Listen to stdin (from pipe)")
+			go modes.ConsumeStdin(http.Ch)
+			startWebServer(cmd)
+		}
+	},
 }
 
 var listenStdCmd = &cobra.Command{
@@ -44,21 +52,19 @@ var listenStdCmd = &cobra.Command{
 	Short: "Listens to STDOUT/STDERR of a provided command. Example `logdy stdin \"npm run dev\"`",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		if len(args) == 0 {
 			utils.Logger.Info("Listen to stdin (from pipe)")
 			go modes.ConsumeStdin(http.Ch)
-			return
+		} else {
+			utils.Logger.WithFields(logrus.Fields{
+				"cmd": args[0],
+			}).Info("Listen to command stdout")
+			arg := strings.Split(args[0], " ")
+			modes.StartCmd(http.Ch, arg[0], arg[1:])
 		}
-
-		utils.Logger.WithFields(logrus.Fields{
-			"cmd": args[0],
-		}).Info("Listen to command stdout")
-		arg := strings.Split(args[0], " ")
-		modes.StartCmd(http.Ch, arg[0], arg[1:])
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		startWebServer(cmd, args)
+		startWebServer(cmd)
 	},
 }
 
@@ -78,7 +84,7 @@ var followCmd = &cobra.Command{
 		modes.FollowFiles(http.Ch, args)
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		startWebServer(cmd, args)
+		startWebServer(cmd)
 	},
 }
 
@@ -145,7 +151,7 @@ var listenSocketCmd = &cobra.Command{
 		go modes.StartSocketServers(http.Ch, ip, args)
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		startWebServer(cmd, args)
+		startWebServer(cmd)
 	},
 }
 
@@ -167,19 +173,16 @@ var demoSocketCmd = &cobra.Command{
 		go modes.GenerateRandomData(produceJson, num, http.Ch, context.Background())
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		startWebServer(cmd, args)
+		startWebServer(cmd)
 	},
 }
 
-func startWebServer(cmd *cobra.Command, args []string) {
+func startWebServer(cmd *cobra.Command) {
+	utils.Logger.Debug("Starting webserver")
+
 	noupdates, _ := cmd.Flags().GetBool("no-updates")
 	if !noupdates && Version != "0.0.0" {
 		go utils.CheckUpdatesAndPrintInfo(Version)
-	}
-
-	if len(args) == 0 {
-		utils.Logger.Info("Listen to stdin (from pipe)")
-		go modes.ConsumeStdin(http.Ch)
 	}
 
 	if !config.AnalyticsEnabled {
