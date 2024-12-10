@@ -5,6 +5,7 @@ import (
 	"io"
 	"os/exec"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -15,6 +16,9 @@ func runCmd(cmds []string, t *testing.T) {
 	// Start logdy process in stdin mode with fallthrough enabled
 	// -t enables fallthrough so we can see the output
 	cmd := exec.Command("go", cmds...)
+
+	// Set process group for clean shutdown
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	// Get stdin pipe
 	stdin, err := cmd.StdinPipe()
@@ -30,6 +34,7 @@ func runCmd(cmds []string, t *testing.T) {
 
 	// Create a channel to collect output lines
 	outputChan := make(chan string)
+	done := make(chan bool)
 
 	// Start goroutine to read stdout
 	go func() {
@@ -41,7 +46,10 @@ func runCmd(cmds []string, t *testing.T) {
 				return
 			}
 			if err != nil {
-				t.Errorf("Error reading stdout: %v", err)
+				// Ignore pipe errors since we're killing the process
+				if !strings.Contains(err.Error(), "pipe") {
+					t.Errorf("Error reading stdout: %v", err)
+				}
 				close(outputChan)
 				return
 			}
@@ -67,25 +75,52 @@ func runCmd(cmds []string, t *testing.T) {
 		assert.NoError(t, err)
 	}
 
+	// Close stdin to signal we're done writing
+	stdin.Close()
+
 	// Collect output with timeout
 	receivedLines := make([]string, 0)
 	timeout := time.After(5 * time.Second)
 
-	for i := 0; i < len(testLines); i++ {
-		select {
-		case line, ok := <-outputChan:
-			if !ok {
-				t.Fatal("Output channel closed before receiving all expected lines")
+	go func() {
+		for i := 0; i < len(testLines); i++ {
+			select {
+			case line, ok := <-outputChan:
+				if !ok {
+					return
+				}
+				receivedLines = append(receivedLines, line)
+				if len(receivedLines) == len(testLines) {
+					done <- true
+					return
+				}
+			case <-timeout:
+				done <- true
+				return
 			}
-			receivedLines = append(receivedLines, line)
-		case <-timeout:
-			t.Fatal("Timeout waiting for output")
 		}
+	}()
+
+	<-done
+
+	// Kill the process group to ensure clean shutdown
+	pgid, err := syscall.Getpgid(cmd.Process.Pid)
+	if err == nil {
+		syscall.Kill(-pgid, syscall.SIGTERM)
 	}
 
-	// Kill the process since we're done testing
-	if err := cmd.Process.Kill(); err != nil {
-		t.Errorf("Failed to kill process: %v", err)
+	// Wait with timeout to avoid hanging
+	waitChan := make(chan error)
+	go func() {
+		waitChan <- cmd.Wait()
+	}()
+
+	select {
+	case <-waitChan:
+		// Process exited
+	case <-time.After(2 * time.Second):
+		// Force kill if it didn't exit cleanly
+		cmd.Process.Kill()
 	}
 
 	// Verify output matches input
