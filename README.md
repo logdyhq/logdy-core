@@ -15,16 +15,21 @@
 </a>
 </p>
 
-### Latest version: 0.13.3 (10 December 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v013)
+### Latest version: 0.14.0 (13 December 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v014)
 
 Logdy is a single-binary that you add to your PATH so it's available just like any other tool: grep, awk, sed, jq. **No installations, no deployments, no compilations**. It works locally, so it's also secure. [Read more](https://logdy.dev/docs/what-is-logdy).
 
 ### Standalone use
 ```bash
-# use with any shell command
+# Use with any shell command
 $ tail -f file.log | logdy
 INFO[2024-02...] WebUI started, visit http://localhost:8080    port=8080
+
+# Read log files
+$ logdy follow app-out.log --full-read
+INFO[2024-02...] WebUI started, visit http://localhost:8080    port=8080
 ```
+More use [modes in the docs.](https://logdy.dev/docs/explanation/command-modes)
 
 ### Use as a Go library
 ```go
@@ -41,14 +46,15 @@ func main(){
   <-context.Background().Done()
 }
 ```
+Check [docs](https://logdy.dev/docs/golang-logs-viewer) or [example app](https://github.com/logdyhq/logdy-core/blob/main/example-app/main.go).
 
-## Demo
+## Demo of the UI
 Visit [demo.logdy.dev](https://demo.logdy.dev)
 
 
 ![autogenerate](https://github.com/logdyhq/logdy-core/assets/1653294/bfe09fa8-bbba-46fa-b54d-503f796c7b57)
 
-Visit [logdy.dev](http://logdy.dev) for more info.
+Visit [logdy.dev](http://logdy.dev) for more info and detalied documentation.
 
 ##### Project status: Beta version, new features added actively.
 
@@ -73,7 +79,7 @@ $ brew install logdy
 Naviage to [releases](https://github.com/logdyhq/logdy-core/releases) Github page and download the latest release for your architecture.
 
 ```bash
-wget https://github.com/logdyhq/logdy-core/releases/download/v0.13.3/logdy_linux_amd64;
+wget https://github.com/logdyhq/logdy-core/releases/download/v0.14.0/logdy_linux_amd64;
 mv logdy_linux_amd64 logdy;
 chmod +x logdy;
 ```
@@ -149,9 +155,9 @@ If you would like to develop with UI, check [readme for logdy-ui](https://github
 
 ## Building
 
-This repository uses static asset embedding during compilation. This way, the UI is served from a single binary. Before you build make sure you copy a compiled [UI](https://github.com/logdyhq/logdy-ui) (follow the instructions about building) in `assets` directory. The UI is already commited to this repository, so you don't have to do anymore actions.
+This repository uses static asset embedding during compilation. This way, the UI is served from a single binary. Before you build make sure you copy a compiled [UI](https://github.com/logdyhq/logdy-ui) (follow the instructions about building) in `http/assets` directory. The UI is already commited to this repository, so you don't have to do anymore actions.
 
-Look at `embed.go` for more details on how UI is embedded into the binary.
+Look at `http/embed.go` for more details on how UI is embedded into the binary.
 
 For a local architecture build:
 ```bash
