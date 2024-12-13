@@ -30,20 +30,18 @@ Break free from the terminal and stream your logs in any format to a web UI
 where you can filter and browse well formatted application output.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-	},
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		parseConfig(cmd)
-
-		verbose, _ := cmd.Flags().GetBool("verbose")
-		utils.SetLoggerLevel(verbose)
-	},
-	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		// by default, `stdin` mode will run if [command] is not provided
 		if len(args) == 0 {
 			utils.Logger.Info("Listen to stdin (from pipe)")
 			go modes.ConsumeStdin(http.Ch)
 			startWebServer(cmd)
 		}
+	},
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		parseConfig(cmd)
+
+		verbose, _ := cmd.Flags().GetBool("verbose")
+		utils.SetLoggerLevel(verbose)
 	},
 }
 
