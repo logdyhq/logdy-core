@@ -17,17 +17,26 @@
 
 ### Latest version: 0.14.1 (20 February 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v014)
 
-Logdy is a single-binary that you add to your PATH so it's available just like any other tool: grep, awk, sed, jq. **No installations, no deployments, no compilations**. It works locally, so it's also secure. [Read more](https://logdy.dev/docs/what-is-logdy).
+Logdy is a lightweight, single-binary log viewer that works just like `grep`, `awk`, `sed`, or `jq`. Simply add it to your PATH—no installation, deployment, or compilation required. It runs entirely locally, ensuring security and privacy. [Read more](https://logdy.dev/docs/what-is-logdy).
+
+### Key features
+* Zero-dependency single binary
+* Embedded Web UI
+* Real-time log viewing and filtering
+* Secure local operation
+* Multiple input modes (files, stdin, sockets, REST API)
+* Custom parsers and columns with TypeScript support (code editor with types support)
+* Go library integration
 
 ### Standalone use
 ```bash
 # Use with any shell command
 $ tail -f file.log | logdy
-INFO[2024-02...] WebUI started, visit http://localhost:8080    port=8080
+WebUI started, visit http://localhost:8080
 
 # Read log files
 $ logdy follow app-out.log --full-read
-INFO[2024-02...] WebUI started, visit http://localhost:8080    port=8080
+WebUI started, visit http://localhost:8080
 ```
 More use [modes in the docs.](https://logdy.dev/docs/explanation/command-modes)
 
@@ -42,8 +51,11 @@ func main(){
     ServerIp:       "127.0.0.1",
     ServerPort:     "8080",
   }, nil)
-  logdyLogger.LogString("Log message")
-  <-context.Background().Done()
+
+  // app code...
+
+  logdyLogger.LogString("This is a message")
+  logdyLogger.Log(logdy.Fields{"msg": "supports structured logs too", "url": "some url here"})
 }
 ```
 Check [docs](https://logdy.dev/docs/golang-logs-viewer) or [example app](https://github.com/logdyhq/logdy-core/blob/main/example-app/main.go).
@@ -54,36 +66,36 @@ Visit [demo.logdy.dev](https://demo.logdy.dev)
 
 ![autogenerate](https://github.com/logdyhq/logdy-core/assets/1653294/bfe09fa8-bbba-46fa-b54d-503f796c7b57)
 
-Visit [logdy.dev](http://logdy.dev) for more info and detalied documentation.
+Visit [logdy.dev](http://logdy.dev) for more info and detailed documentation.
 
-##### Project status: Beta version, new features added actively.
+##### Project status: New features added actively.
 
-Logdy is under heavy development and a lot of features is yet to be added. A feedback is welcome from early adopters. Feel free to post [Issues](https://github.com/logdyhq/logdy-core/issues), [Pull Requests](https://github.com/logdyhq/logdy-core/pulls) and contribute in the [Discussions](https://github.com/logdyhq/logdy-core/discussions). Stay tuned for updates, visit [Logdy Blog](https://logdy.dev/blog).
+Logdy is in active development, with new features being added regularly. Feedback is welcome from early adopters. Feel free to post [Issues](https://github.com/logdyhq/logdy-core/issues), [Pull Requests](https://github.com/logdyhq/logdy-core/pulls) and contribute in the [Discussions](https://github.com/logdyhq/logdy-core/discussions). Stay tuned for updates, visit [Logdy Blog](https://logdy.dev/blog).
 
 ## Install using script
 The command below will download the latest release and add the executable to your system's PATH. You can also use it to update Logdy.
 
 ```bash
-$ curl https://logdy.dev/install.sh | sh
+curl https://logdy.dev/install.sh | sh
 ```
 
 ## Install with Homebrew (MacOS)
 On MacOS you can use homebrew to install Logdy.
 
 ```bash
-$ brew install logdy
+brew install logdy
 ```
 
 ## Download precompiled binary
 
-Naviage to [releases](https://github.com/logdyhq/logdy-core/releases) Github page and download the latest release for your architecture.
+Navigate to [releases](https://github.com/logdyhq/logdy-core/releases) Github page and download the latest release for your architecture.
 
 ```bash
 wget https://github.com/logdyhq/logdy-core/releases/download/v0.14.1/logdy_linux_amd64;
 mv logdy_linux_amd64 logdy;
 chmod +x logdy;
 ```
-In addition you can [add the binary to your PATH](https://logdy.dev/docs/how-tos#how-to-add-logdy-to-path) for easier access.
+Additionally, you can [add the binary to your PATH](https://logdy.dev/docs/how-tos#how-to-add-logdy-to-path) for easier access.
 ## Quick start
 Whatever the below command will produce to the output, will be forwarded to a Web UI.
 ```bash
@@ -99,7 +111,7 @@ There are multiple other ways you can run Logdy, check the [docs](https://logdy.
 
 ## Install Go library
 ```bash
-$ go get -u github.com/logdyhq/logdy-core/logdy
+go get -u github.com/logdyhq/logdy-core/logdy
 ```
 [Read more](https://logdy.dev/docs/golang-logs-viewer) about how to use Logdy embedded into your Go app.
 
