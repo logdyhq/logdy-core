@@ -15,7 +15,7 @@
 </a>
 </p>
 
-### Latest version: 0.14.0 (13 December 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v014)
+### Latest version: 0.14.1 (20 February 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v014)
 
 Logdy is a single-binary that you add to your PATH so it's available just like any other tool: grep, awk, sed, jq. **No installations, no deployments, no compilations**. It works locally, so it's also secure. [Read more](https://logdy.dev/docs/what-is-logdy).
 
@@ -79,7 +79,7 @@ $ brew install logdy
 Naviage to [releases](https://github.com/logdyhq/logdy-core/releases) Github page and download the latest release for your architecture.
 
 ```bash
-wget https://github.com/logdyhq/logdy-core/releases/download/v0.14.0/logdy_linux_amd64;
+wget https://github.com/logdyhq/logdy-core/releases/download/v0.14.1/logdy_linux_amd64;
 mv logdy_linux_amd64 logdy;
 chmod +x logdy;
 ```
@@ -125,6 +125,7 @@ Available Commands:
   utils       A set of utility commands that help working with large files
 
 Flags:
+      --api-key string                API key (send as a header Authorization)
       --append-to-file string         Path to a file where message logs will be appended, the file will be created if it doesn't exist
       --append-to-file-raw            When 'append-to-file' is set, raw lines without metadata will be saved to a file
       --bulk-window int               A time window during which log messages are gathered and send in a bulk to a client. Decreasing this window will improve the 'real-time' feeling of messages presented on the screen but could decrease UI performance (default 100)
