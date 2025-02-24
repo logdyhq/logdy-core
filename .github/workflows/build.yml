@@ -1,0 +1,30 @@
+name: Go Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23.2'
+        
+    - name: Install dependencies
+      run: go mod download
+        
+    - name: Build binaries
+    # exclude tests dir for now as it doesnt work well with GH actions
+      run: |
+        gox -ldflags "-X 'main.Version=0.15.0'" -output="bin/{{.Dir}}_{{.OS}}_{{.Arch}}" -osarch="linux/amd64 windows/386 windows/amd64 darwin/amd64 darwin/arm64 linux/arm64"
+
+
