@@ -216,6 +216,7 @@ func parseConfig(cmd *cobra.Command) {
 	} else {
 		config.UiPass, _ = cmd.Flags().GetString("ui-pass")
 	}
+	
 
 	modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 	modes.DisableANSICodeStripping, _ = cmd.Flags().GetBool("disable-ansi-code-stripping")
