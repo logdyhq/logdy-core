@@ -206,7 +206,6 @@ func parseConfig(cmd *cobra.Command) {
 	config.MaxMessageCount, _ = cmd.Flags().GetInt64("max-message-count")
 	config.AnalyticsEnabled, _ = cmd.Flags().GetBool("no-analytics")
 
-	uiPassFromEnvironment = os.Getenv("LOGDY_UIPASS")
 	uiPass := os.Getenv("LOGDY_UIPASS")
 
 	if uiPass == "" {
