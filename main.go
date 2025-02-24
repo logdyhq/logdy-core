@@ -198,7 +198,6 @@ func parseConfig(cmd *cobra.Command) {
 
 	config.ServerPort, _ = cmd.Flags().GetString("port")
 	config.ServerIp, _ = cmd.Flags().GetString("ui-ip")
-	config.UiPass, _ = cmd.Flags().GetString("ui-pass")
 	config.ConfigFilePath, _ = cmd.Flags().GetString("config")
 	config.BulkWindowMs, _ = cmd.Flags().GetInt64("bulk-window")
 	config.AppendToFile, _ = cmd.Flags().GetString("append-to-file")
@@ -206,6 +205,17 @@ func parseConfig(cmd *cobra.Command) {
 	config.AppendToFileRaw, _ = cmd.Flags().GetBool("append-to-file-raw")
 	config.MaxMessageCount, _ = cmd.Flags().GetInt64("max-message-count")
 	config.AnalyticsEnabled, _ = cmd.Flags().GetBool("no-analytics")
+
+	uiPassFromEnvironment = os.Getenv("LOGDY_UIPASS")
+	config.UiPass, _ = os.Getenv("LOGDY_UIPASS") || cmd.Flags().GetString("ui-pass")
+	
+	uiPass := os.GetEnv("LOGDY_UIPASS")
+	
+	if (uiPassFromEnvironment == nil) {
+		config.UiPass = uiPassFromEnvironment
+	} else {
+		config.UiPass, _ = cmd.Flags().GetString("ui-pass")
+	}
 
 	modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 	modes.DisableANSICodeStripping, _ = cmd.Flags().GetBool("disable-ansi-code-stripping")
