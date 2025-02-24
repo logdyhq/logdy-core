@@ -207,16 +207,13 @@ func parseConfig(cmd *cobra.Command) {
 	config.AnalyticsEnabled, _ = cmd.Flags().GetBool("no-analytics")
 
 	uiPassFromEnvironment = os.Getenv("LOGDY_UIPASS")
-	config.UiPass, _ = os.Getenv("LOGDY_UIPASS") || cmd.Flags().GetString("ui-pass")
-	
-	uiPass := os.GetEnv("LOGDY_UIPASS")
-	
-	if (uiPassFromEnvironment == nil) {
-		config.UiPass = uiPassFromEnvironment
-	} else {
+	uiPass := os.Getenv("LOGDY_UIPASS")
+
+	if uiPass == "" {
 		config.UiPass, _ = cmd.Flags().GetString("ui-pass")
+	} else {
+		config.UiPass = uiPass
 	}
-	
 
 	modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 	modes.DisableANSICodeStripping, _ = cmd.Flags().GetBool("disable-ansi-code-stripping")
