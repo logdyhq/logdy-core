@@ -25,11 +25,11 @@ jobs:
     - name: Build binaries
     # exclude tests dir for now as it doesnt work well with GH actions
       run: |
-        go build -o bin/logdy-core 
+        go build -o bin/logdy 
     
     - name: Upload binaries
       uses: actions/upload-artifact@v4
       with:
         name: binaries
         path: |
-          bin/**
+          bin/logdy
