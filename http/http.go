@@ -130,12 +130,12 @@ func StartWebserver(config *Config) {
 }
 
 type Config struct {
-	AnalyticsEnabled bool
-	UiPass           string
-	ConfigFilePath   string
-	BulkWindowMs     int64
-	HttpPathPrefix   string
-	ApiKey           string
+	AnalyticsDisabled bool
+	UiPass            string
+	ConfigFilePath    string
+	BulkWindowMs      int64
+	HttpPathPrefix    string
+	ApiKey            string
 
 	ServerPort string
 	ServerIp   string

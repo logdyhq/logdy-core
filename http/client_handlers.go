@@ -51,7 +51,7 @@ func handleStatus(config *Config) func(w http.ResponseWriter, r *http.Request) {
 			BaseMessage: models.BaseMessage{
 				MessageType: models.MessageTypeInit,
 			},
-			AnalyticsEnabled: config.AnalyticsEnabled,
+			AnalyticsEnabled: !config.AnalyticsDisabled,
 			AuthRequired:     config.UiPass != "",
 			ConfigStr:        configStr,
 			ApiPrefix:        config.HttpPathPrefix,

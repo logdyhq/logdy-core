@@ -86,17 +86,17 @@ func (l *LogdyInstance) LogString(message string) error {
 
 func translateToConfig(c *Config) http.Config {
 	return http.Config{
-		AnalyticsEnabled: c.AnalyticsEnabled,
-		UiPass:           c.UiPass,
-		ConfigFilePath:   c.ConfigFilePath,
-		BulkWindowMs:     c.BulkWindowMs,
-		HttpPathPrefix:   c.HttpPathPrefix,
-		ServerPort:       c.ServerPort,
-		ServerIp:         c.ServerIp,
-		MaxMessageCount:  c.MaxMessageCount,
-		LogLevel:         c.LogLevel,
-		LogInterceptor:   c.LogInterceptor,
-		ApiKey:           c.ApiKey,
+		AnalyticsDisabled: c.AnalyticsEnabled,
+		UiPass:            c.UiPass,
+		ConfigFilePath:    c.ConfigFilePath,
+		BulkWindowMs:      c.BulkWindowMs,
+		HttpPathPrefix:    c.HttpPathPrefix,
+		ServerPort:        c.ServerPort,
+		ServerIp:          c.ServerIp,
+		MaxMessageCount:   c.MaxMessageCount,
+		LogLevel:          c.LogLevel,
+		LogInterceptor:    c.LogInterceptor,
+		ApiKey:            c.ApiKey,
 	}
 }
 

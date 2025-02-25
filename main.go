@@ -183,7 +183,7 @@ func startWebServer(cmd *cobra.Command) {
 		go utils.CheckUpdatesAndPrintInfo(Version)
 	}
 
-	if !config.AnalyticsEnabled {
+	if !config.AnalyticsDisabled {
 		utils.Logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
 	}
 
@@ -205,7 +205,7 @@ func parseConfig(cmd *cobra.Command) {
 	config.ApiKey, _ = cmd.Flags().GetString("api-key")
 	config.AppendToFileRaw, _ = cmd.Flags().GetBool("append-to-file-raw")
 	config.MaxMessageCount, _ = cmd.Flags().GetInt64("max-message-count")
-	config.AnalyticsEnabled, _ = cmd.Flags().GetBool("no-analytics")
+	config.AnalyticsDisabled, _ = cmd.Flags().GetBool("no-analytics")
 
 	modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
 	modes.DisableANSICodeStripping, _ = cmd.Flags().GetBool("disable-ansi-code-stripping")
