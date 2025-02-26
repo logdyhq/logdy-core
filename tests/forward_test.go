@@ -48,7 +48,7 @@ func TestLogdyE2E_Forward(t *testing.T) {
 	wgServer.Wait()
 
 	// Start logdy process
-	cmd := exec.Command("go", "run", "../main.go", "forward", "8475")
+	cmd := exec.Command("go", "run", "../.", "forward", "8475")
 
 	// Get stdin pipe
 	stdin, err := cmd.StdinPipe()
@@ -104,7 +104,7 @@ func TestLogdyE2E_Forward(t *testing.T) {
 	if err := cmd.Process.Kill(); err != nil {
 		t.Errorf("Failed to kill process: %v", err)
 	}
-
+	cmd.Wait()
 	// Verify received messages
 	assert.Equal(t, len(testLines), len(msgReceived))
 	for i, testLine := range testLines {

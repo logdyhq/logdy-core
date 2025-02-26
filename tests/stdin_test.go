@@ -121,6 +121,7 @@ func runCmd(cmds []string, t *testing.T) {
 	case <-time.After(2 * time.Second):
 		// Force kill if it didn't exit cleanly
 		cmd.Process.Kill()
+		cmd.Wait()
 	}
 
 	// Verify output matches input
@@ -131,9 +132,9 @@ func runCmd(cmds []string, t *testing.T) {
 }
 
 func TestLogdyE2E_NoCommand(t *testing.T) {
-	runCmd([]string{"run", "../main.go", "-t"}, t)
+	runCmd([]string{"run", "../.", "-t"}, t)
 }
 
 func TestLogdyE2E_StdinCommand(t *testing.T) {
-	runCmd([]string{"run", "../main.go", "stdin", "-t"}, t)
+	runCmd([]string{"run", "../.", "stdin", "-t"}, t)
 }

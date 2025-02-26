@@ -191,26 +191,6 @@ func startWebServer(cmd *cobra.Command) {
 	http.StartWebserver(config)
 }
 
-func parseConfig(cmd *cobra.Command) {
-	config = &http.Config{
-		HttpPathPrefix: "",
-	}
-
-	config.ServerPort, _ = cmd.Flags().GetString("port")
-	config.ServerIp, _ = cmd.Flags().GetString("ui-ip")
-	config.UiPass, _ = cmd.Flags().GetString("ui-pass")
-	config.ConfigFilePath, _ = cmd.Flags().GetString("config")
-	config.BulkWindowMs, _ = cmd.Flags().GetInt64("bulk-window")
-	config.AppendToFile, _ = cmd.Flags().GetString("append-to-file")
-	config.ApiKey, _ = cmd.Flags().GetString("api-key")
-	config.AppendToFileRaw, _ = cmd.Flags().GetBool("append-to-file-raw")
-	config.MaxMessageCount, _ = cmd.Flags().GetInt64("max-message-count")
-	config.AnalyticsDisabled, _ = cmd.Flags().GetBool("no-analytics")
-
-	modes.FallthroughGlobal, _ = cmd.Flags().GetBool("fallthrough")
-	modes.DisableANSICodeStripping, _ = cmd.Flags().GetBool("disable-ansi-code-stripping")
-}
-
 func init() {
 	utils.InitLogger()
 	http.InitChannel()
@@ -220,12 +200,13 @@ func init() {
 	UtilsCmd.AddCommand(utilsCutByDateCmd)
 	UtilsCmd.AddCommand(utilsCutByLineNumberCmd)
 
-	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served")
-	rootCmd.PersistentFlags().StringP("ui-ip", "", "127.0.0.1", "Bind Web UI server to a specific IP address")
-	rootCmd.PersistentFlags().StringP("ui-pass", "", "", "Password that will be used to authenticate in the UI")
-	rootCmd.PersistentFlags().StringP("config", "", "", "Path to a file where a config (json) for the UI is located")
-	rootCmd.PersistentFlags().StringP("append-to-file", "", "", "Path to a file where message logs will be appended, the file will be created if it doesn't exist")
-	rootCmd.PersistentFlags().StringP("api-key", "", "", "API key (send as a header "+http.API_KEY_HEADER_NAME+")")
+	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served (env: LOGDY_PORT)")
+	rootCmd.PersistentFlags().StringP("ui-ip", "", "127.0.0.1", "Bind Web UI server to a specific IP address (env: LOGDY_UI_IP)")
+	rootCmd.PersistentFlags().StringP("ui-pass", "", "", "Password that will be used to authenticate in the UI (env: LOGDY_UI_PASS)")
+	rootCmd.PersistentFlags().StringP("config", "", "", "Path to a file where a config (json) for the UI is located (env: LOGDY_CONFIG)")
+	rootCmd.PersistentFlags().StringP("append-to-file", "", "", "Path to a file where message logs will be appended, the file will be created if it doesn't exist (env: LOGDY_APPEND_TO_FILE)")
+	rootCmd.PersistentFlags().StringP("api-key", "", "", "API key (send as a header "+http.API_KEY_HEADER_NAME+") (env: LOGDY_API_KEY)")
+
 	rootCmd.PersistentFlags().Int64P("bulk-window", "", 100, "A time window during which log messages are gathered and send in a bulk to a client. Decreasing this window will improve the 'real-time' feeling of messages presented on the screen but could decrease UI performance")
 	rootCmd.PersistentFlags().Int64P("max-message-count", "", 100_000, "Max number of messages that will be stored in a buffer for further retrieval. On buffer overflow, oldest messages will be removed.")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose logs")

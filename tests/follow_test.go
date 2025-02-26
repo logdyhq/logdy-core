@@ -15,7 +15,6 @@ import (
 )
 
 func readOutput(t *testing.T, stdout io.ReadCloser, outputChan chan string, followChan chan bool, wg *sync.WaitGroup) {
-	defer wg.Done()
 	reader := bufio.NewReader(stdout)
 	for {
 		line, err := reader.ReadString('\n')
@@ -70,7 +69,7 @@ func TestLogdyE2E_FollowFullRead(t *testing.T) {
 	}()
 
 	// Start logdy process in follow mode with full-read and fallthrough enabled
-	cmd := exec.Command("go", "run", "../main.go", "follow", "--full-read", "-t", pipeName)
+	cmd := exec.Command("go", "run", "../.", "follow", "--full-read", "-t", pipeName)
 
 	// Get stdout pipe
 	stdout, err := cmd.StdoutPipe()
@@ -135,7 +134,7 @@ func TestLogdyE2E_FollowFullRead(t *testing.T) {
 	if err := cmd.Process.Kill(); err != nil {
 		t.Errorf("Failed to kill process: %v", err)
 	}
-
+	cmd.Wait()
 	// Wait for the output reader goroutine to finish
 	wg.Wait()
 

@@ -24,9 +24,11 @@ func TestLogdyE2E_Socket(t *testing.T) {
 	wg.Add(3) // Expect 3 messages (1 from each port)
 
 	// Start logdy process with -t flag for stdout output
-	cmd := exec.Command("go", "run", "../main.go", "socket", "-t", "8475", "8476", "8477")
+	cmd := exec.Command("go", "run", "../.", "socket", "-t", "8475", "8476", "8477")
 	// Get stdout pipe for verifying messages
 	stdout, err := cmd.StdoutPipe()
+	assert.NoError(t, err)
+	stderr, err := cmd.StderrPipe()
 	assert.NoError(t, err)
 
 	// Start reading stdout in background
@@ -42,6 +44,20 @@ func TestLogdyE2E_Socket(t *testing.T) {
 				// Message sent to channel
 			default:
 				// Channel full, ignore additional messages
+			}
+		}
+	}()
+
+	go func() {
+		scanner := bufio.NewScanner(stderr)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line != "exit status 1" {
+				t.Log(line)
+				t.Error("Stderr produced content!")
+				// if error is: panic: listen tcp 127.0.0.1:8080: bind: address already in use
+				// the previous test has not closed the process lsof -i :8080
+				return
 			}
 		}
 	}()
@@ -110,7 +126,7 @@ func TestLogdyE2E_Socket(t *testing.T) {
 	if err := cmd.Process.Kill(); err != nil {
 		t.Errorf("Failed to kill process: %v", err)
 	}
-
+	cmd.Wait()
 	// Verify we received messages from all ports
 	assert.Equal(t, 3, len(msgReceived), "Expected 3 messages, got %d", len(msgReceived))
 	for i, port := range ports {
