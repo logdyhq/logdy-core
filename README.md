@@ -15,7 +15,7 @@
 </a>
 </p>
 
-### Latest version: 0.14.1 (20 February 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v014)
+### Latest version: 0.15.0 (28 February 2024) - [Read announcement](https://logdy.dev/blog/post/logdy-new-version-announcement-v014)
 
 Logdy is a lightweight, single-binary log viewer that works just like `grep`, `awk`, `sed`, or `jq`. Simply add it to your PATH—no installation, deployment, or compilation required. It runs entirely locally, ensuring security and privacy. [Read more](https://logdy.dev/docs/what-is-logdy).
 
@@ -91,7 +91,7 @@ brew install logdy
 Navigate to [releases](https://github.com/logdyhq/logdy-core/releases) Github page and download the latest release for your architecture.
 
 ```bash
-wget https://github.com/logdyhq/logdy-core/releases/download/v0.14.1/logdy_linux_amd64;
+wget https://github.com/logdyhq/logdy-core/releases/download/v0.15.0/logdy_linux_amd64;
 mv logdy_linux_amd64 logdy;
 chmod +x logdy;
 ```
@@ -154,6 +154,8 @@ Flags:
   -v, --verbose                       Verbose logs
       --version                       version for logdy
 ```
+
+**It is possible to also provide some of the options as ENV variables, read more in the docs**
 
 ## Development
 For development, we recommend running `demo` mode
