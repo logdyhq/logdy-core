@@ -19,11 +19,11 @@ import (
 */
 
 type UpdateResponse struct {
-	CurrentVersion          string `json:"current_version"`
-	CurrentVersionPublished string `json:"current_version_published"`
-	DownloadLink            string `json:"download_link"`
-	BlogLink                string `json:"blog_link"`
-	Excerpt                 string `json:"excerpt"`
+	CurrentVersion            string `json:"current_version"`
+	CurrentVersionPublishedAt string `json:"current_version_published"`
+	DownloadLink              string `json:"download_link"`
+	BlogLink                  string `json:"blog_link"`
+	Excerpt                   string `json:"excerpt"`
 }
 
 func checkUpdates(version string) (UpdateResponse, error) {
@@ -59,32 +59,56 @@ func init() {
 	}
 }
 
-func CheckUpdatesAndPrintInfo(version string) {
-	update, err := checkUpdates(version)
+func CheckUpdatesAndPrintInfo(currentVersion string) {
+	update, err := checkUpdates(currentVersion)
 
 	if err != nil {
 		Logger.WithField("error", err).Error("Error while checking for Logdy updates")
 		return
 	}
 
-	if update.CurrentVersion == version {
+	options := CompareOptions{
+		CheckMajor: true,
+		CheckMinor: true,
+		CheckPatch: false,
+	}
+
+	result, err := CompareSemver(currentVersion, update.CurrentVersion, options)
+
+	if err != nil {
 		Logger.WithFields(logrus.Fields{
-			"current_version": version,
+			"current_version": currentVersion,
+			"latest_version":  update.CurrentVersion,
+			"error":           err,
+		}).Error("There was a problem when comparing versions!")
+	}
+
+	if result == 0 {
+		Logger.WithFields(logrus.Fields{
+			"current_version": currentVersion,
 			"latest_version":  update.CurrentVersion,
 		}).Debug("No updates detected")
 		return
 	}
 
+	if result > 0 {
+		Logger.WithFields(logrus.Fields{
+			"current_version": currentVersion,
+			"latest_version":  update.CurrentVersion,
+		}).Debug("Seems like you're running a version ahead, good for you!")
+		return
+	}
+
 	Logger.WithFields(logrus.Fields{
 		"response":        update,
-		"current_version": version,
+		"current_version": currentVersion,
 		"latest_version":  update.CurrentVersion,
 	}).Debug("New version available")
 
 	Logger.Info(Yellow + "----------------------------------------------------------")
 	Logger.Info(Yellow + ">                NEW LOGDY VERSION AVAILABLE              ")
 	Logger.Info(Yellow + "> Version: " + update.CurrentVersion)
-	Logger.Info(Yellow + "> Date published: " + update.CurrentVersionPublished)
+	Logger.Info(Yellow + "> Date published: " + update.CurrentVersionPublishedAt)
 	Logger.Info(Yellow + "> Download: " + update.DownloadLink)
 	Logger.Info(Yellow + "> Blog: " + update.BlogLink)
 
