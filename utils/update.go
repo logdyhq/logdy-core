@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"runtime"
 
+	"github.com/logdyhq/logdy-core/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,16 +19,8 @@ import (
 	    };
 */
 
-type UpdateResponse struct {
-	CurrentVersion            string `json:"current_version"`
-	CurrentVersionPublishedAt string `json:"current_version_published"`
-	DownloadLink              string `json:"download_link"`
-	BlogLink                  string `json:"blog_link"`
-	Excerpt                   string `json:"excerpt"`
-}
-
-func checkUpdates(version string) (UpdateResponse, error) {
-	update := UpdateResponse{}
+func checkUpdates(version string) (models.LogdyVersionUpdateResponse, error) {
+	update := models.LogdyVersionUpdateResponse{}
 	resp, err := http.Get("https://update.logdy.dev?version=" + version)
 	if err != nil {
 		return update, err
@@ -59,7 +52,16 @@ func init() {
 	}
 }
 
+var UpdateVersionChecked = false
+var UpdateVersion models.LogdyVersionUpdateResponse
+
+func IsNewVersionAvailable() (models.LogdyVersionUpdateResponse, bool) {
+	return UpdateVersion, UpdateVersionChecked
+}
+
 func CheckUpdatesAndPrintInfo(currentVersion string) {
+	UpdateVersionChecked = true
+
 	update, err := checkUpdates(currentVersion)
 
 	if err != nil {
@@ -98,6 +100,10 @@ func CheckUpdatesAndPrintInfo(currentVersion string) {
 		}).Debug("Seems like you're running a version ahead, good for you!")
 		return
 	}
+
+	UpdateVersion = update
+	UpdateVersion.Checked = true
+	UpdateVersion.LocalVersion = currentVersion
 
 	Logger.WithFields(logrus.Fields{
 		"response":        update,

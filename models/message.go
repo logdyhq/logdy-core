@@ -1,6 +1,8 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type LogType int
 
@@ -51,10 +53,21 @@ type ClientMsgStatus struct {
 	Stats  Stats       `json:"stats"`
 }
 
+type LogdyVersionUpdateResponse struct {
+	Checked                   bool   `json:"checked"` // whether the new version was checked
+	LocalVersion              string `json:"local_version"`
+	CurrentVersion            string `json:"current_version"`
+	CurrentVersionPublishedAt string `json:"current_version_published"`
+	DownloadLink              string `json:"download_link"`
+	BlogLink                  string `json:"blog_link"`
+	Excerpt                   string `json:"excerpt"`
+}
+
 type InitMessage struct {
 	BaseMessage
-	AnalyticsEnabled bool   `json:"analyticsEnabled"`
-	AuthRequired     bool   `json:"authRequired"`
-	ConfigStr        string `json:"configStr"`
-	ApiPrefix        string `json:"apiPrefix"`
+	AnalyticsEnabled bool                       `json:"analyticsEnabled"`
+	AuthRequired     bool                       `json:"authRequired"`
+	ConfigStr        string                     `json:"configStr"`
+	ApiPrefix        string                     `json:"apiPrefix"`
+	UpdateVersion    LogdyVersionUpdateResponse `json:"updateVersion"`
 }

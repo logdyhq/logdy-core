@@ -47,6 +47,8 @@ func handleStatus(config *Config) func(w http.ResponseWriter, r *http.Request) {
 			configStr = utils.LoadFile(config.ConfigFilePath)
 		}
 
+		newVersion, _ := utils.IsNewVersionAvailable()
+
 		initMsg, _ := json.Marshal(models.InitMessage{
 			BaseMessage: models.BaseMessage{
 				MessageType: models.MessageTypeInit,
@@ -55,6 +57,7 @@ func handleStatus(config *Config) func(w http.ResponseWriter, r *http.Request) {
 			AuthRequired:     config.UiPass != "",
 			ConfigStr:        configStr,
 			ApiPrefix:        config.HttpPathPrefix,
+			UpdateVersion:    newVersion,
 		})
 
 		w.Header().Add("content-type", "application/json")
