@@ -78,6 +78,11 @@ func GenerateRandomData(jsonFormat bool, numPerSec int, ch chan models.Message, 
 }
 
 func generateTextRandomData() string {
+	b := gofakeit.Bool()
+	bs := "false"
+	if b {
+		bs = "true"
+	}
 	return strings.Join([]string{
 		time.Now().Format("15:04:05.0000"),
 		strconv.Itoa(int(time.Now().UnixMilli())),
@@ -90,11 +95,12 @@ func generateTextRandomData() string {
 		gofakeit.UserAgent(),
 		gofakeit.HTTPMethod(),
 		utils.PickRandom[string](correlationIds),
+		bs,
 	}, " | ")
 }
 
 func generateJsonRandomData() string {
-	val, _ := json.Marshal(map[string]string{
+	val, _ := json.Marshal(map[string]interface{}{
 		"ts":             time.Now().Format("15:04:05.0000"),
 		"unix":           strconv.Itoa(int(time.Now().UnixMilli())),
 		"duration":       strconv.Itoa(rand.Intn(500-300) + 300),
@@ -106,6 +112,7 @@ func generateJsonRandomData() string {
 		"ua":             gofakeit.UserAgent(),
 		"method":         gofakeit.HTTPMethod(),
 		"correlation_id": utils.PickRandom[string](correlationIds),
+		"active":         gofakeit.Bool(),
 	})
 
 	return string(val)
