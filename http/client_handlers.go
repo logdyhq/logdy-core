@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -13,6 +14,8 @@ import (
 	"github.com/logdyhq/logdy-core/utils"
 	"github.com/sirupsen/logrus"
 )
+
+const LOGDY_CONFIG_ENV_FILE = "logdy.config.json"
 
 func handleCheckPass(uiPass string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -43,8 +46,15 @@ func handleStatus(config *Config) func(w http.ResponseWriter, r *http.Request) {
 
 		configStr := ""
 		if config.ConfigFilePath != "" {
-			utils.Logger.Debug("Reading config file")
+			utils.Logger.WithFields(logrus.Fields{
+				"file": config.ConfigFilePath,
+			}).Debug("Reading config file")
 			configStr = utils.LoadFile(config.ConfigFilePath)
+		} else if utils.FileExists(LOGDY_CONFIG_ENV_FILE) {
+			utils.Logger.WithFields(logrus.Fields{
+				"file": LOGDY_CONFIG_ENV_FILE,
+			}).Info("Loading local env file")
+			configStr = utils.LoadFile(LOGDY_CONFIG_ENV_FILE)
 		}
 
 		newVersion, _ := utils.IsNewVersionAvailable()
@@ -228,6 +238,40 @@ func handleWs(uiPass string, clients *ClientsStruct) func(w http.ResponseWriter,
 			}
 		}
 
+	}
+}
+
+func handleClientSettingsSave() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		type Req struct {
+			Layout string `json:"layout"`
+		}
+
+		var p Req
+
+		err := json.NewDecoder(r.Body).Decode(&p)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = os.WriteFile(LOGDY_CONFIG_ENV_FILE, []byte(p.Layout), 0644)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		path, err := os.Getwd()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{
+			"location": path + string(os.PathSeparator) + LOGDY_CONFIG_ENV_FILE,
+		})
 	}
 }
 

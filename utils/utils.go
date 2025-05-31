@@ -27,6 +27,11 @@ func LoadFile(configFilePath string) string {
 	return string(bytes)
 }
 
+func FileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return err == nil
+}
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }

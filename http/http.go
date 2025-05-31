@@ -98,6 +98,7 @@ func HandleHttp(config *Config, clients *ClientsStruct, serveMux hand) {
 		http.HandleFunc(config.HttpPathPrefix+"api/client/set-status", handleClientStatus(clients))
 		http.HandleFunc(config.HttpPathPrefix+"api/client/load", handleClientLoad(clients))
 		http.HandleFunc(config.HttpPathPrefix+"api/client/peek-log", handleClientPeek(clients))
+		http.HandleFunc(config.HttpPathPrefix+"api/config/save", handleClientSettingsSave())
 		http.HandleFunc(config.HttpPathPrefix+"ws", handleWs(config.UiPass, clients))
 
 		http.HandleFunc(config.HttpPathPrefix+"api/log", apiKeyMiddleware(config.ApiKey, handleLog(Ch)))
@@ -109,6 +110,7 @@ func HandleHttp(config *Config, clients *ClientsStruct, serveMux hand) {
 		serveMux.HandleFunc(config.HttpPathPrefix+"api/client/set-status", handleClientStatus(clients))
 		serveMux.HandleFunc(config.HttpPathPrefix+"api/client/load", handleClientLoad(clients))
 		serveMux.HandleFunc(config.HttpPathPrefix+"api/client/peek-log", handleClientPeek(clients))
+		http.HandleFunc(config.HttpPathPrefix+"api/config/save", handleClientSettingsSave())
 		serveMux.HandleFunc(config.HttpPathPrefix+"ws", handleWs(config.UiPass, clients))
 
 		serveMux.HandleFunc(config.HttpPathPrefix+"api/log", apiKeyMiddleware(config.ApiKey, handleLog(Ch)))
