@@ -346,7 +346,18 @@ func InitializeClients(config Config) *ClientsStruct {
 		return Clients
 	}
 
-	mainChan := utils.ProcessIncomingMessages(Ch, config.AppendToFile, config.AppendToFileRaw)
+	bts := int64(0)
+
+	if config.AppendToFileRotateMaxSize != "" {
+		var err error
+		bts, err = utils.ParseRotateSize(config.AppendToFileRotateMaxSize)
+
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	mainChan := utils.ProcessIncomingMessagesWithRotation(Ch, config.AppendToFile, config.AppendToFileRaw, bts, 1000)
 	Clients = NewClients(mainChan, config.MaxMessageCount)
 
 	return Clients

@@ -205,6 +205,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("ui-pass", "", "", "Password that will be used to authenticate in the UI (env: LOGDY_UI_PASS)")
 	rootCmd.PersistentFlags().StringP("config", "", "", "Path to a file where a config (json) for the UI is located (env: LOGDY_CONFIG)")
 	rootCmd.PersistentFlags().StringP("append-to-file", "", "", "Path to a file where message logs will be appended, the file will be created if it doesn't exist (env: LOGDY_APPEND_TO_FILE)")
+	rootCmd.PersistentFlags().StringP("rotate-file-size", "", "", "If set, how big the file can grow before being rotated, used K/M/G to describe the size, example: 15M -> 15 megabytes (env: LOGDY_ROTATE_FILE_SIZE)")
 	rootCmd.PersistentFlags().StringP("api-key", "", "", "API key (send as a header "+http.API_KEY_HEADER_NAME+") (env: LOGDY_API_KEY)")
 
 	rootCmd.PersistentFlags().Int64P("bulk-window", "", 100, "A time window during which log messages are gathered and send in a bulk to a client. Decreasing this window will improve the 'real-time' feeling of messages presented on the screen but could decrease UI performance")

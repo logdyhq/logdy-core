@@ -142,9 +142,10 @@ type Config struct {
 	ServerPort string
 	ServerIp   string
 
-	AppendToFile    string
-	AppendToFileRaw bool
-	MaxMessageCount int64
+	AppendToFile              string
+	AppendToFileRotateMaxSize string
+	AppendToFileRaw           bool
+	MaxMessageCount           int64
 
 	LogLevel       utils.LOG_LEVEL
 	LogInterceptor utils.LogInterceptor
