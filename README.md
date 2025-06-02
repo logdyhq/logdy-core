@@ -149,6 +149,7 @@ Flags:
   -n, --no-analytics                  Opt-out from sending anonymous analytical data that helps improve Logdy
   -u, --no-updates                    Opt-out from checking updates on program startup
   -p, --port string                   Port on which the Web UI will be served (default "8080")
+      --rotate-file-size string       If set, how big the file can grow before being rotated, used K/M/G to describe the size, example: 15M -> 15 megabytes (env: LOGDY_ROTATE_FILE_SIZE)
       --ui-ip string                  Bind Web UI server to a specific IP address (default "127.0.0.1")
       --ui-pass string                Password that will be used to authenticate in the UI
   -v, --verbose                       Verbose logs

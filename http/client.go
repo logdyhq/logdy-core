@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -353,7 +354,7 @@ func InitializeClients(config Config) *ClientsStruct {
 		bts, err = utils.ParseRotateSize(config.AppendToFileRotateMaxSize)
 
 		if err != nil {
-			panic(err)
+			panic(fmt.Errorf("file rotate size parse error: %w", err))
 		}
 	}
 
