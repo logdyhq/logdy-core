@@ -20,5 +20,6 @@ FROM alpine:latest
 
 COPY --from=builder /go/bin/logdy-core /logdy
 
+EXPOSE 8080
 ENTRYPOINT ["/logdy", "--ui-ip", "0.0.0.0" ]
 CMD [ "stdin" ]
