@@ -1,0 +1,14 @@
+services:
+  logdy:
+    image: ghcr.io/logdyhq/logdy-core:latest
+    container_name: logdy
+    read_only: true
+    user: "1000:1000"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges=true
+    cap_drop:
+      - ALL
+    volumes:
+      - /home/docker/caddy/logs:/var/log:ro #path to your log file
+    command: [ "follow", "/var/log/access.log"]
