@@ -202,6 +202,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "Port on which the Web UI will be served (env: LOGDY_PORT)")
 	rootCmd.PersistentFlags().StringP("ui-ip", "", "127.0.0.1", "Bind Web UI server to a specific IP address (env: LOGDY_UI_IP)")
+	rootCmd.PersistentFlags().StringP("ui-path", "", "", "Bind WEB UI server to a specific subpath (env: LOGDY_UI_PATH)")
 	rootCmd.PersistentFlags().StringP("ui-pass", "", "", "Password that will be used to authenticate in the UI (env: LOGDY_UI_PASS)")
 	rootCmd.PersistentFlags().StringP("config", "", "", "Path to a file where a config (json) for the UI is located (env: LOGDY_CONFIG)")
 	rootCmd.PersistentFlags().StringP("append-to-file", "", "", "Path to a file where message logs will be appended, the file will be created if it doesn't exist (env: LOGDY_APPEND_TO_FILE)")

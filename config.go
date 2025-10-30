@@ -107,6 +107,7 @@ func parseConfig(cmd *cobra.Command) {
 	config.AppendToFile = getStringCfgVal("append-to-file", prefix+"APPEND_TO_FILE", cmd)
 	config.AppendToFileRotateMaxSize = getStringCfgVal("rotate-file-size", prefix+"ROTATE_FILE_SIZE", cmd)
 	config.ApiKey = getStringCfgVal("api-key", prefix+"API_KEY", cmd)
+	config.HttpPathPrefix = getStringCfgVal("ui-path", prefix+"UI_PATH", cmd)
 
 	config.BulkWindowMs = getIntCfgVal("bulk-window", cmd)
 	config.MaxMessageCount = getIntCfgVal("max-message-count", cmd)
