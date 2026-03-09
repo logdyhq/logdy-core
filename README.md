@@ -72,12 +72,14 @@ Visit [logdy.dev](http://logdy.dev) for more info and detailed documentation.
 
 Logdy is in active development, with new features being added regularly. Feedback is welcome from early adopters. Feel free to post [Issues](https://github.com/logdyhq/logdy-core/issues), [Pull Requests](https://github.com/logdyhq/logdy-core/pulls) and contribute in the [Discussions](https://github.com/logdyhq/logdy-core/discussions). Stay tuned for updates, visit [Logdy Blog](https://logdy.dev/blog).
 
-## Install using script
-The command below will download the latest release and add the executable to your system's PATH. You can also use it to update Logdy.
+## Install using script (quick path)
+The command below downloads and installs Logdy quickly.
 
 ```bash
-curl https://logdy.dev/install.sh | sh
+curl -fsSL https://logdy.dev/install.sh | sh
 ```
+
+Security note: for higher assurance, prefer downloading a pinned release artifact and verify checksums/signatures before execution.
 
 ## Install with Homebrew (MacOS)
 On MacOS you can use homebrew to install Logdy.
@@ -96,6 +98,20 @@ mv logdy_linux_amd64 logdy;
 chmod +x logdy;
 ```
 Additionally, you can [add the binary to your PATH](https://logdy.dev/docs/how-tos#how-to-add-logdy-to-path) for easier access.
+
+## Security quickstart (recommended)
+
+For local development:
+
+```bash
+tail -f app.log | logdy --ui-ip 127.0.0.1 --no-updates --no-analytics
+```
+
+If you expose Logdy beyond localhost, set both UI and API authentication:
+
+```bash
+tail -f app.log | logdy --ui-ip 0.0.0.0 --ui-pass '<strong-password>' --api-key '<long-random-token>' --no-updates --no-analytics
+```
 ## Quick start
 Whatever the below command will produce to the output, will be forwarded to a Web UI.
 ```bash
@@ -146,7 +162,8 @@ Flags:
   -t, --fallthrough                   Will fallthrough all of the stdin received to the terminal as is (will display incoming messages)
   -h, --help                          help for logdy
       --max-message-count int         Max number of messages that will be stored in a buffer for further retrieval. On buffer overflow, oldest messages will be removed. (default 100000)
-  -n, --no-analytics                  Opt-out from sending anonymous analytical data that helps improve Logdy
+      --analytics                     Enable anonymous analytics (disabled by default)
+  -n, --no-analytics                  Disable anonymous analytics
   -u, --no-updates                    Opt-out from checking updates on program startup
   -p, --port string                   Port on which the Web UI will be served (default "8080")
       --rotate-file-size string       If set, how big the file can grow before being rotated, used K/M/G to describe the size, example: 15M -> 15 megabytes (env: LOGDY_ROTATE_FILE_SIZE)

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -184,11 +185,37 @@ func startWebServer(cmd *cobra.Command) {
 	}
 
 	if !config.AnalyticsDisabled {
-		utils.Logger.Warn("No opt-out from analytics, we'll be receiving anonymous usage data, which will be used to improve the product. To opt-out use the flag --no-analytics.")
+		utils.Logger.Warn("Analytics is enabled and anonymous usage data may be sent. Disable with --no-analytics.")
+	}
+
+	if isPublicBind(config.ServerIp) {
+		if strings.TrimSpace(config.UiPass) == "" {
+			utils.Logger.Warn("Web UI is bound to a non-local interface without --ui-pass. Set --ui-pass or bind to 127.0.0.1.")
+		}
+		if strings.TrimSpace(config.ApiKey) == "" {
+			utils.Logger.Warn("REST API is bound to a non-local interface without --api-key. Set --api-key or bind to 127.0.0.1.")
+		}
 	}
 
 	http.HandleHttp(config, http.InitializeClients(*config), nil)
 	http.StartWebserver(config)
+}
+
+func isPublicBind(ip string) bool {
+	s := strings.TrimSpace(ip)
+	if s == "" {
+		// empty means all interfaces for net/http listen address
+		return true
+	}
+	if s == "localhost" || s == "127.0.0.1" || s == "::1" {
+		return false
+	}
+	parsed := net.ParseIP(s)
+	if parsed == nil {
+		// Conservative default for non-IP hostnames.
+		return true
+	}
+	return !parsed.IsLoopback()
 }
 
 func init() {
@@ -213,6 +240,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose logs")
 	rootCmd.PersistentFlags().BoolP("disable-ansi-code-stripping", "", false, "Use this flag to disable Logdy from stripping ANSI sequence codes")
 	rootCmd.PersistentFlags().BoolP("append-to-file-raw", "", false, "When 'append-to-file' is set, raw lines without metadata will be saved to a file")
+	rootCmd.PersistentFlags().BoolP("analytics", "", false, "Enable anonymous analytics (disabled by default)")
 	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that helps improve Logdy")
 	rootCmd.PersistentFlags().BoolP("no-updates", "u", false, "Opt-out from checking updates on program startup")
 	rootCmd.PersistentFlags().BoolP("fallthrough", "t", false, "Will fallthrough all of the stdin received to the terminal as is (will display incoming messages)")

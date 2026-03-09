@@ -112,7 +112,10 @@ func parseConfig(cmd *cobra.Command) {
 	config.MaxMessageCount = getIntCfgVal("max-message-count", cmd)
 
 	config.AppendToFileRaw = getBoolCfgVal("append-to-file-raw", cmd)
-	config.AnalyticsDisabled = getBoolCfgVal("no-analytics", cmd)
+	noAnalytics := getBoolCfgVal("no-analytics", cmd)
+	analyticsEnabled := getBoolCfgVal("analytics", cmd)
+	// Secure/privacy-first default: analytics is disabled unless explicitly enabled.
+	config.AnalyticsDisabled = !analyticsEnabled || noAnalytics
 	modes.FallthroughGlobal = getBoolCfgVal("fallthrough", cmd)
 	modes.DisableANSICodeStripping = getBoolCfgVal("disable-ansi-code-stripping", cmd)
 }
