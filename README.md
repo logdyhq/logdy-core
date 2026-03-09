@@ -72,14 +72,16 @@ Visit [logdy.dev](http://logdy.dev) for more info and detailed documentation.
 
 Logdy is in active development, with new features being added regularly. Feedback is welcome from early adopters. Feel free to post [Issues](https://github.com/logdyhq/logdy-core/issues), [Pull Requests](https://github.com/logdyhq/logdy-core/pulls) and contribute in the [Discussions](https://github.com/logdyhq/logdy-core/discussions). Stay tuned for updates, visit [Logdy Blog](https://logdy.dev/blog).
 
-## Install using script (quick path)
-The command below downloads and installs Logdy quickly.
+## Download precompiled binary
+
+Recommended for security-sensitive environments: download a pinned release artifact and verify checksums/signatures before execution.
 
 ```bash
-curl -fsSL https://logdy.dev/install.sh | sh
+wget https://github.com/logdyhq/logdy-core/releases/download/v0.16.0/logdy_linux_amd64;
+mv logdy_linux_amd64 logdy;
+chmod +x logdy;
 ```
-
-Security note: for higher assurance, prefer downloading a pinned release artifact and verify checksums/signatures before execution.
+Additionally, you can [add the binary to your PATH](https://logdy.dev/docs/how-tos#how-to-add-logdy-to-path) for easier access.
 
 ## Install with Homebrew (MacOS)
 On MacOS you can use homebrew to install Logdy.
@@ -88,16 +90,14 @@ On MacOS you can use homebrew to install Logdy.
 brew install logdy
 ```
 
-## Download precompiled binary
-
-Navigate to [releases](https://github.com/logdyhq/logdy-core/releases) Github page and download the latest release for your architecture.
+## Install using script (quick path)
+The command below downloads and installs Logdy quickly.
 
 ```bash
-wget https://github.com/logdyhq/logdy-core/releases/download/v0.16.0/logdy_linux_amd64;
-mv logdy_linux_amd64 logdy;
-chmod +x logdy;
+curl -fsSL https://logdy.dev/install.sh | sh
 ```
-Additionally, you can [add the binary to your PATH](https://logdy.dev/docs/how-tos#how-to-add-logdy-to-path) for easier access.
+
+Security note: this path is convenient but lower assurance than pinned-release verification.
 
 ## Security quickstart (recommended)
 
@@ -111,6 +111,12 @@ If you expose Logdy beyond localhost, set both UI and API authentication:
 
 ```bash
 tail -f app.log | logdy --ui-ip 0.0.0.0 --ui-pass '<strong-password>' --api-key '<long-random-token>' --no-updates --no-analytics
+```
+
+If you must run insecurely in trusted networks only:
+
+```bash
+tail -f app.log | logdy --ui-ip 0.0.0.0 --allow-insecure-bind
 ```
 ## Quick start
 Whatever the below command will produce to the output, will be forwarded to a Web UI.
@@ -163,6 +169,7 @@ Flags:
   -h, --help                          help for logdy
       --max-message-count int         Max number of messages that will be stored in a buffer for further retrieval. On buffer overflow, oldest messages will be removed. (default 100000)
       --analytics                     Enable anonymous analytics (disabled by default)
+      --allow-insecure-bind           Allow non-local bind without --ui-pass/--api-key (not recommended)
   -n, --no-analytics                  Disable anonymous analytics
   -u, --no-updates                    Opt-out from checking updates on program startup
   -p, --port string                   Port on which the Web UI will be served (default "8080")

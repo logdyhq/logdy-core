@@ -11,7 +11,6 @@ If you discover a security issue, please do not open a public issue with exploit
 Use one of these channels:
 
 - GitHub private vulnerability report (Security tab)
-- Email: security@logdy.dev
 
 Please include:
 

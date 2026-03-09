@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -188,17 +189,36 @@ func startWebServer(cmd *cobra.Command) {
 		utils.Logger.Warn("Analytics is enabled and anonymous usage data may be sent. Disable with --no-analytics.")
 	}
 
-	if isPublicBind(config.ServerIp) {
-		if strings.TrimSpace(config.UiPass) == "" {
-			utils.Logger.Warn("Web UI is bound to a non-local interface without --ui-pass. Set --ui-pass or bind to 127.0.0.1.")
-		}
-		if strings.TrimSpace(config.ApiKey) == "" {
-			utils.Logger.Warn("REST API is bound to a non-local interface without --api-key. Set --api-key or bind to 127.0.0.1.")
-		}
+	if err := validateServerExposure(config); err != nil {
+		utils.Logger.Fatal(err)
 	}
 
 	http.HandleHttp(config, http.InitializeClients(*config), nil)
 	http.StartWebserver(config)
+}
+
+func validateServerExposure(cfg *http.Config) error {
+	if !isPublicBind(cfg.ServerIp) {
+		return nil
+	}
+
+	missing := make([]string, 0, 2)
+	if strings.TrimSpace(cfg.UiPass) == "" {
+		missing = append(missing, "--ui-pass")
+	}
+	if strings.TrimSpace(cfg.ApiKey) == "" {
+		missing = append(missing, "--api-key")
+	}
+	if len(missing) == 0 {
+		return nil
+	}
+
+	msg := "non-local bind requires authentication: missing " + strings.Join(missing, ", ") + "; use --allow-insecure-bind to bypass"
+	if cfg.AllowInsecureBind {
+		utils.Logger.Warn(msg)
+		return nil
+	}
+	return errors.New(msg)
 }
 
 func isPublicBind(ip string) bool {
@@ -207,7 +227,8 @@ func isPublicBind(ip string) bool {
 		// empty means all interfaces for net/http listen address
 		return true
 	}
-	if s == "localhost" || s == "127.0.0.1" || s == "::1" {
+	ls := strings.ToLower(s)
+	if ls == "localhost" || strings.HasPrefix(ls, "localhost.") || strings.HasSuffix(ls, ".local") || s == "127.0.0.1" || s == "::1" {
 		return false
 	}
 	parsed := net.ParseIP(s)
@@ -242,6 +263,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("append-to-file-raw", "", false, "When 'append-to-file' is set, raw lines without metadata will be saved to a file")
 	rootCmd.PersistentFlags().BoolP("analytics", "", false, "Enable anonymous analytics (disabled by default)")
 	rootCmd.PersistentFlags().BoolP("no-analytics", "n", false, "Opt-out from sending anonymous analytical data that helps improve Logdy")
+	rootCmd.PersistentFlags().BoolP("allow-insecure-bind", "", false, "Allow non-local bind without --ui-pass/--api-key (not recommended)")
 	rootCmd.PersistentFlags().BoolP("no-updates", "u", false, "Opt-out from checking updates on program startup")
 	rootCmd.PersistentFlags().BoolP("fallthrough", "t", false, "Will fallthrough all of the stdin received to the terminal as is (will display incoming messages)")
 

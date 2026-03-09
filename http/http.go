@@ -133,6 +133,7 @@ func StartWebserver(config *Config) {
 
 type Config struct {
 	AnalyticsDisabled bool
+	AllowInsecureBind bool
 	UiPass            string
 	ConfigFilePath    string
 	BulkWindowMs      int64

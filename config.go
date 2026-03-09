@@ -116,6 +116,7 @@ func parseConfig(cmd *cobra.Command) {
 	analyticsEnabled := getBoolCfgVal("analytics", cmd)
 	// Secure/privacy-first default: analytics is disabled unless explicitly enabled.
 	config.AnalyticsDisabled = !analyticsEnabled || noAnalytics
+	config.AllowInsecureBind = getBoolCfgVal("allow-insecure-bind", cmd)
 	modes.FallthroughGlobal = getBoolCfgVal("fallthrough", cmd)
 	modes.DisableANSICodeStripping = getBoolCfgVal("disable-ansi-code-stripping", cmd)
 }
