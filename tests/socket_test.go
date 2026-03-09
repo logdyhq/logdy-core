@@ -14,6 +14,11 @@ import (
 )
 
 func TestLogdyE2E_Socket(t *testing.T) {
+	webPort := freeTCPPort(t)
+	port1 := freeTCPPort(t)
+	port2 := freeTCPPort(t)
+	port3 := freeTCPPort(t)
+
 	// Channel for collecting messages
 	msgChan := make(chan string, 10)
 
@@ -24,7 +29,7 @@ func TestLogdyE2E_Socket(t *testing.T) {
 	wg.Add(3) // Expect 3 messages (1 from each port)
 
 	// Start logdy process with -t flag for stdout output
-	cmd := exec.Command("go", "run", "../.", "socket", "-t", "8475", "8476", "8477")
+	cmd := exec.Command("go", "run", "../.", "--port", webPort, "socket", "-t", port1, port2, port3)
 	// Get stdout pipe for verifying messages
 	stdout, err := cmd.StdoutPipe()
 	assert.NoError(t, err)
@@ -71,7 +76,7 @@ func TestLogdyE2E_Socket(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	// Send test messages to each port
-	ports := []string{"8475", "8476", "8477"}
+	ports := []string{port1, port2, port3}
 	for _, port := range ports {
 		// Try to connect with retries
 		var conn net.Conn

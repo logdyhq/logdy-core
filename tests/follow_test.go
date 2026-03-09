@@ -42,6 +42,8 @@ func readOutput(t *testing.T, stdout io.ReadCloser, outputChan chan string, foll
 }
 
 func TestLogdyE2E_FollowFullRead(t *testing.T) {
+	webPort := freeTCPPort(t)
+
 	// Create a named pipe
 	pipeName := "/tmp/logdy-test-pipe-full"
 
@@ -69,7 +71,7 @@ func TestLogdyE2E_FollowFullRead(t *testing.T) {
 	}()
 
 	// Start logdy process in follow mode with full-read and fallthrough enabled
-	cmd := exec.Command("go", "run", "../.", "follow", "--full-read", "-t", pipeName)
+	cmd := exec.Command("go", "run", "../.", "--port", webPort, "follow", "--full-read", "-t", pipeName)
 
 	// Get stdout pipe
 	stdout, err := cmd.StdoutPipe()

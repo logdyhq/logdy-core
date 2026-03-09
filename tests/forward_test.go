@@ -13,6 +13,9 @@ import (
 )
 
 func TestLogdyE2E_Forward(t *testing.T) {
+	forwardPort := freeTCPPort(t)
+	webPort := freeTCPPort(t)
+
 	// Track received messages
 	msgReceived := []string{}
 
@@ -24,7 +27,7 @@ func TestLogdyE2E_Forward(t *testing.T) {
 
 	// Start TCP server
 	go func() {
-		l, err := net.Listen("tcp", ":8475")
+		l, err := net.Listen("tcp", "127.0.0.1:"+forwardPort)
 		if err != nil {
 			panic(err)
 		}
@@ -48,7 +51,7 @@ func TestLogdyE2E_Forward(t *testing.T) {
 	wgServer.Wait()
 
 	// Start logdy process
-	cmd := exec.Command("go", "run", "../.", "forward", "8475")
+	cmd := exec.Command("go", "run", "../.", "--port", webPort, "forward", forwardPort)
 
 	// Get stdin pipe
 	stdin, err := cmd.StdinPipe()

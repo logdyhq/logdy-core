@@ -13,9 +13,13 @@ import (
 )
 
 func runCmd(cmds []string, t *testing.T) {
+	webPort := freeTCPPort(t)
+
 	// Start logdy process in stdin mode with fallthrough enabled
 	// -t enables fallthrough so we can see the output
-	cmd := exec.Command("go", cmds...)
+	args := append([]string{}, cmds...)
+	args = append(args, "--port", webPort)
+	cmd := exec.Command("go", args...)
 
 	// Set process group for clean shutdown
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
