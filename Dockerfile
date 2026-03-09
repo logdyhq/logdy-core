@@ -21,7 +21,7 @@ FROM alpine:latest
 COPY --from=builder /go/bin/logdy-core /logdy
 
 EXPOSE 8080
-# Explicitly acknowledge non-local bind in container defaults.
-# For production, provide --ui-pass and --api-key instead.
-ENTRYPOINT ["/logdy", "--ui-ip", "0.0.0.0", "--allow-insecure-bind" ]
+# Secure-by-default: non-local bind requires --ui-pass and --api-key.
+# Provide these at runtime, or explicitly pass --allow-insecure-bind in trusted networks only.
+ENTRYPOINT ["/logdy", "--ui-ip", "0.0.0.0" ]
 CMD [ "stdin" ]

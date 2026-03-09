@@ -228,7 +228,7 @@ func isPublicBind(ip string) bool {
 		return true
 	}
 	ls := strings.ToLower(s)
-	if ls == "localhost" || strings.HasPrefix(ls, "localhost.") || strings.HasSuffix(ls, ".local") || s == "127.0.0.1" || s == "::1" {
+	if ls == "localhost" || strings.HasPrefix(ls, "localhost.") || s == "127.0.0.1" || s == "::1" {
 		return false
 	}
 	parsed := net.ParseIP(s)

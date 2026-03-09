@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/logdyhq/logdy-core/http"
@@ -78,7 +80,7 @@ func TestIsPublicBind(t *testing.T) {
 		{"127.0.0.1", false},
 		{"localhost", false},
 		{"localhost.internal", false},
-		{"myhost.local", false},
+		{"myhost.local", true},
 		{"::1", false},
 		{"0.0.0.0", true},
 		{"192.168.1.10", true},
@@ -118,5 +120,28 @@ func TestValidateServerExposure(t *testing.T) {
 		AllowInsecureBind: true,
 	}); err != nil {
 		t.Fatalf("allow-insecure-bind should bypass validation: %v", err)
+	}
+}
+
+func TestStartWebServerRejectsInsecureBindAtStartup(t *testing.T) {
+	if os.Getenv("LOGDY_TEST_HELPER_START_WEBSERVER") == "1" {
+		config = &http.Config{
+			ServerIp:          "0.0.0.0",
+			AnalyticsDisabled: true,
+			AllowInsecureBind: false,
+			ServerPort:        "0",
+		}
+		cmd := &cobra.Command{Use: "test"}
+		cmd.Flags().Bool("no-updates", true, "")
+		_ = cmd.Flags().Set("no-updates", "true")
+		startWebServer(cmd)
+		return
+	}
+
+	c := exec.Command(os.Args[0], "-test.run=TestStartWebServerRejectsInsecureBindAtStartup")
+	c.Env = append(os.Environ(), "LOGDY_TEST_HELPER_START_WEBSERVER=1")
+	_, err := c.CombinedOutput()
+	if err == nil {
+		t.Fatal("expected startup to fail for insecure non-local bind without auth")
 	}
 }

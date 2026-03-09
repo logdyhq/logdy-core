@@ -83,6 +83,14 @@ chmod +x logdy;
 ```
 Additionally, you can [add the binary to your PATH](https://logdy.dev/docs/how-tos#how-to-add-logdy-to-path) for easier access.
 
+Example checksum verification (replace version/asset/checksum values):
+
+```bash
+curl -fsSL -o logdy_linux_amd64 "https://github.com/logdyhq/logdy-core/releases/download/v0.16.0/logdy_linux_amd64"
+echo "<sha256-from-release>  logdy_linux_amd64" | shasum -a 256 -c -
+chmod +x logdy_linux_amd64 && mv logdy_linux_amd64 logdy
+```
+
 ## Install with Homebrew (MacOS)
 On MacOS you can use homebrew to install Logdy.
 
@@ -112,6 +120,8 @@ If you expose Logdy beyond localhost, set both UI and API authentication:
 ```bash
 tail -f app.log | logdy --ui-ip 0.0.0.0 --ui-pass '<strong-password>' --api-key '<long-random-token>' --no-updates --no-analytics
 ```
+
+If you run via Docker with `--ui-ip 0.0.0.0`, pass both `--ui-pass` and `--api-key` at runtime.
 
 If you must run insecurely in trusted networks only:
 
