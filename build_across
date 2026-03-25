@@ -1,1 +1,23 @@
-gox -ldflags "-X 'main.Version=0.17.1'" -output="bin/logdy_{{.OS}}_{{.Arch}}" -osarch="linux/amd64 linux/arm64 windows/386 windows/amd64 darwin/amd64 darwin/arm64"
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+VERSION="${1:-dev}"
+OUT_DIR="${2:-bin}"
+LDFLAGS="-X 'main.Version=${VERSION}'"
+
+mkdir -p "${OUT_DIR}"
+
+echo "Building common release targets..."
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "${LDFLAGS}" -o "${OUT_DIR}/logdy_linux_amd64" .
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -ldflags "${LDFLAGS}" -o "${OUT_DIR}/logdy_linux_arm64" .
+GOOS=windows GOARCH=386 CGO_ENABLED=0 go build -trimpath -ldflags "${LDFLAGS}" -o "${OUT_DIR}/logdy_windows_386.exe" .
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "${LDFLAGS}" -o "${OUT_DIR}/logdy_windows_amd64.exe" .
+GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "${LDFLAGS}" -o "${OUT_DIR}/logdy_darwin_amd64" .
+GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -ldflags "${LDFLAGS}" -o "${OUT_DIR}/logdy_darwin_arm64" .
+
+echo "Building Raspberry Pi targets..."
+GOOS=linux GOARCH=arm GOARM=6 CGO_ENABLED=0 go build -trimpath -ldflags "${LDFLAGS}" -o "${OUT_DIR}/logdy_linux_armv6" .
+GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -trimpath -ldflags "${LDFLAGS}" -o "${OUT_DIR}/logdy_linux_armv7" .
+
+echo "Done. Binaries are in ${OUT_DIR}/"

@@ -1,0 +1,56 @@
+name: Cross-build Raspberry Pi
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  cross-build:
+    name: Build ${{ matrix.target.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: linux-armv6
+            goos: linux
+            goarch: arm
+            goarm: "6"
+            output: logdy_linux_armv6
+          - name: linux-armv7
+            goos: linux
+            goarch: arm
+            goarm: "7"
+            output: logdy_linux_armv7
+          - name: linux-arm64
+            goos: linux
+            goarch: arm64
+            goarm: ""
+            output: logdy_linux_arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.2"
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build target
+        env:
+          GOOS: ${{ matrix.target.goos }}
+          GOARCH: ${{ matrix.target.goarch }}
+          GOARM: ${{ matrix.target.goarm }}
+          CGO_ENABLED: "0"
+        run: go build -trimpath -ldflags "-X 'main.Version=ci'" -o "bin/${{ matrix.target.output }}" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target.output }}
+          path: bin/${{ matrix.target.output }}

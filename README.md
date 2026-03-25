@@ -27,6 +27,7 @@ Logdy is a lightweight, single-binary log viewer that works just like `grep`, `a
 * Multiple input modes (files, stdin, sockets, REST API)
 * Custom parsers and columns with TypeScript support (code editor with types support)
 * Go library integration
+* Cross-build support for Raspberry Pi (ARMv6/ARMv7/ARM64)
 
 ### Standalone use
 ```bash
@@ -91,11 +92,45 @@ brew install logdy
 Navigate to [releases](https://github.com/logdyhq/logdy-core/releases) Github page and download the latest release for your architecture.
 
 ```bash
-wget https://github.com/logdyhq/logdy-core/releases/download/v0.16.0/logdy_linux_amd64;
-mv logdy_linux_amd64 logdy;
+wget https://github.com/logdyhq/logdy-core/releases/download/vX.Y.Z/logdy_linux_arm64;
+mv logdy_linux_arm64 logdy;
 chmod +x logdy;
 ```
 Additionally, you can [add the binary to your PATH](https://logdy.dev/docs/how-tos#how-to-add-logdy-to-path) for easier access.
+
+## Raspberry Pi
+
+`logdy` runs well on Raspberry Pi with 32-bit and 64-bit OS images.
+
+### Build Raspberry Pi binaries
+Use the dedicated script to generate binaries for:
+- `linux/armv6` (Pi Zero / Pi 1)
+- `linux/armv7` (Pi 2 / Pi 3 with 32-bit OS)
+- `linux/arm64` (Pi 3/4/5 with 64-bit OS)
+
+```bash
+./scripts/build_rpi.sh X.Y.Z
+```
+
+Generated files:
+- `bin/logdy_linux_armv6`
+- `bin/logdy_linux_armv7`
+- `bin/logdy_linux_arm64`
+
+### Install as a service on Raspberry Pi (systemd)
+This repository includes a hardened service unit at `packaging/systemd/logdy.service`.
+
+Example installation flow on Raspberry Pi:
+```bash
+sudo install -m 0755 ./bin/logdy_linux_arm64 /usr/local/bin/logdy
+sudo ./scripts/install_rpi_service.sh /usr/local/bin/logdy
+```
+
+By default, service mode starts:
+- `logdy --ui-ip 0.0.0.0 --port 8080 stdin`
+
+Then access the UI from your network:
+- `http://<raspberry-pi-ip>:8080`
 ## Quick start
 Whatever the below command will produce to the output, will be forwarded to a Web UI.
 ```bash
@@ -181,12 +216,11 @@ go build
 ```
 
 ## Releasing
-For a cross architecture build use `gox`. This will generate multiple binaries (in `bin/` dir) for specific architectures, don't forget to update `main.Version` tag.
+For cross-architecture builds use the repository scripts below. This generates binaries in `bin/` and includes Raspberry Pi targets.
+
 ```bash
-gox \
-    -ldflags "-X 'main.Version=x.x.x'" \
-    -output="bin/{{.Dir}}_{{.OS}}_{{.Arch}}" \
-    -osarch="linux/amd64 windows/386 windows/amd64 darwin/amd64 darwin/arm64 linux/arm64"
+./build_across x.x.x
+./scripts/build_rpi.sh x.x.x
 ```
 
 Once it's ready, publish the binaries in a new Github release. Again, don't forget to update the version.
