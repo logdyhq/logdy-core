@@ -1,0 +1,21 @@
+[Unit]
+Description=Logdy log viewer service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=logdy
+Group=logdy
+WorkingDirectory=/var/lib/logdy
+ExecStart=/usr/local/bin/logdy --ui-ip 0.0.0.0 --port 8080 stdin
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/logdy
+
+[Install]
+WantedBy=multi-user.target
